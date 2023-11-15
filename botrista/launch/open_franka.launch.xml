@@ -1,0 +1,10 @@
+<launch>
+  <arg name="hardware_type" default="fake"/>
+    <include if="$(eval '\'$(var hardware_type)\' == \'fake\'')" file="$(find-pkg-share franka_moveit_config)/launch/moveit.launch.py">
+        <arg name="robot_ip" value="dont-care" />
+        <arg name="use_fake_hardware" value="true"/>
+    </include>
+    <include if="$(eval '\'$(var hardware_type)\' == \'real\'')" file="$(find-pkg-share franka_moveit_config)/launch/rviz.launch.py">
+        <arg name="robot_ip" value="panda0.robot" />
+    </include>
+</launch>
