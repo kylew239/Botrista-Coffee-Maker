@@ -10,7 +10,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/realsense.launch.py'])
+        ('share/' + package_name + '/launch', ['launch/realsense.launch.py']),
+        ('share/' + package_name + '/config', ['config/tag.yaml'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -21,6 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'camera_localizer = botrista.camera_localizer:camera_localizer_entry'
         ],
     },
 )
