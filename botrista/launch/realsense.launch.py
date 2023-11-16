@@ -23,7 +23,7 @@ def generate_launch_description():
                 launch_arguments={
                     'camera_name': 'd435i',
                     'device_type': 'd435i',
-                    'rgb_camera.profile': '1280x720x30',
+                    'rgb_camera.profile': '1920x1080x6',
                     'enable_depth': 'false',
                 }.items(),
             ),
