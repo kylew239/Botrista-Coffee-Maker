@@ -11,9 +11,9 @@ from launch.substitutions import PathJoinSubstitution
 def generate_launch_description():
     return LaunchDescription([
         GroupAction(actions=[
-            # SetRemap(src='/d435i/color/image_raw/compressed',
-            #          dst='/image_rect/compressed'),
-            # SetRemap(src='/d435i/color/camera_info', dst='/camera_info'),
+            SetRemap(src='/d435i/color/image_raw',
+                     dst='/image_raw'),
+            SetRemap(src='/d435i/color/camera_info', dst='/camera_info'),
             IncludeLaunchDescription(
                 PathJoinSubstitution([
                     FindPackageShare("realsense2_camera"),
@@ -23,6 +23,8 @@ def generate_launch_description():
                 launch_arguments={
                     'camera_name': 'd435i',
                     'device_type': 'd435i',
+                    'rgb_camera.profile': '1280x720x30',
+                    'enable_depth': 'false',
                 }.items(),
             ),
         ]),
@@ -38,13 +40,13 @@ def generate_launch_description():
         #         'pointcloud.enable': 'true',
         #     }.items(),
         # ),
-        # IncludeLaunchDescription(
-        #     PathJoinSubstitution([
-        #         FindPackageShare("image_proc"),
-        #         "launch",
-        #         "image_proc.launch.py"
-        #     ])
-        # ),
+        IncludeLaunchDescription(
+            PathJoinSubstitution([
+                FindPackageShare("image_proc"),
+                "launch",
+                "image_proc.launch.py"
+            ])
+        ),
         Node(
             package="apriltag_ros",
             executable="apriltag_node",
@@ -57,9 +59,7 @@ def generate_launch_description():
                 ])
             ],
             remappings={
-                'image_rect': 'd435i/color/image_raw',
-                'image_rect/compressed': 'd435i/color/image_raw/compressed',
-                'camera_info': 'd435i/color/camera_info',
+                'image_rect': 'image_raw',
             }.items()
         ),
         Node(
