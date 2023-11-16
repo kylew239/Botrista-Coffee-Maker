@@ -3,7 +3,7 @@ import rclpy
 from std_msgs.msg import Header
 from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
-from geometry_msgs.msg import TransformStamped, Transform, Vector3
+from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 
 
 class CameraLocalizer(Node):
@@ -32,12 +32,18 @@ class CameraLocalizer(Node):
 
             localizer_tag_to_franka_tf.transform = Transform(
                 translation=Vector3(
-                    x=0.555,
-                    y=0.302
+                    x=0.555-0.2159/2,
+                    y=0.302-0.2159/2,
+                ),
+                rotation=Quaternion(
+                    x=0.0,
+                    y=0.0,
+                    z=0.9999997,
+                    w=0.0007963
                 )
             )
 
-            localizer_tag_to_franka_tf.child_frame_id = "franka"
+            localizer_tag_to_franka_tf.child_frame_id = "panda_link0"
             self.transform_broadcaster.sendTransform(
                 localizer_tag_to_franka_tf)
 
