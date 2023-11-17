@@ -8,8 +8,14 @@ from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, Transform
 from std_msgs.msg import Header
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from rclpy import Future
-from rclpy.duration import Duration
+from enum import Enum, auto
+
+class State(Enum):
+    """ Current state of the system.
+        Determines what the main timer function should be doing on each iteration
+    """
+    MOVING = auto(),
+    STOPPED = auto()
 
 class place_filter(Node):
     def __init__(self):
@@ -21,7 +27,7 @@ class place_filter(Node):
             self.get_parameter("frequency").get_parameter_value().double_value
         )
         self.goal_pose = self.create_publisher(PoseStamped, "goal_pose", 10)
-
+        self.state = State.MOVING
         # create transform listener and buffer
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -41,29 +47,37 @@ class place_filter(Node):
             joint_state_topic="joint_states",
         )
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.point = Pose()
+        self.point = Point()
         self.q = Quaternion()
 
     def timer_callback(self):
-        try:
-            # create transform listener and buffer
-            to_frame_rel = 'panda_hand_tcp'
-            from_frame_rel = 'filter_handle'
-            if self.tf_buffer.can_transform(
-                to_frame_rel,
-                from_frame_rel,
-                rclpy.time.Time()) == 1:
-                t = self.tf_buffer.lookup_transform(
+        if self.state == State.MOVING:
+            try:
+                # create transform listener and buffer
+                to_frame_rel = 'panda_hand_tcp'
+                from_frame_rel = 'filter_handle'
+                if self.tf_buffer.can_transform(
                     to_frame_rel,
                     from_frame_rel,
-                    rclpy.time.Time())
+                    rclpy.time.Time()) == 1:
+                    t = self.tf_buffer.lookup_transform(
+                        to_frame_rel,
+                        from_frame_rel,
+                        rclpy.time.Time())
 
-                self.point = t.transform.translation
-                print(self.point.y)
-                self.q = t.transform.rotation
-        except Exception as e:
-            pass
+                    self.point.x = t.transform.translation.x
+                    self.point.y = t.transform.translation.y
+                    self.point.z = t.transform.translation.z
+                    self.q = t.transform.rotation
 
+                    fut = self.move_to_pick()
+                    fut.add_done_callback(self.fut_callback)
+
+            except Exception as e:
+                pass
+
+    def fut_callback(self, fut):
+        self.state = State.STOPPED
 
     def move_to_pick(self):
         """
@@ -83,9 +97,7 @@ class place_filter(Node):
 def main(args=None):
     rclpy.init(args=args)
     res = place_filter()
-    rclpy.spin(res)
-    # fut = res.move_to_pick()
-    # rclpy.spin_until_future_complete(res, fut)    
+    rclpy.spin(res) 
     rclpy.shutdown()
 
 
