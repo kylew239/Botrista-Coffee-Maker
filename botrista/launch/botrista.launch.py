@@ -24,4 +24,8 @@ def generate_launch_description():
                 'hardware_type': 'real'
             }.items(),
         ),
+        Node(
+            package="botrista",
+            executable="kettle"
+        )
     ])
