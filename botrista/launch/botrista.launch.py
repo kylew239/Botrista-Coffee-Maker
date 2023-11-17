@@ -54,6 +54,10 @@ def generate_launch_description():
         ),
         Node(
             package="botrista",
+            executable="kettle"
+        ),
+        Node(
+            package="botrista",
             executable="pouring"
         )
     ])
