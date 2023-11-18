@@ -11,6 +11,7 @@ from geometry_msgs.msg import Point, Quaternion, Pose, Vector3
 from rcl_interfaces.msg import ParameterDescriptor
 from moveit_msgs.msg import RobotState
 from std_srvs.srv import Empty
+from rclpy.action import ActionServer
 
 
 class Pouring(Node):
@@ -36,6 +37,9 @@ class Pouring(Node):
                                            "execute_traj",
                                            self.execute_callback,
                                            callback_group=self.cb)
+        
+        # Creating action server
+        self._action_server = ActionServer(self, )
 
         # TODO: get april tag home position and use that
         self.home = Point(x=0.3069, y=0.0, z=0.487)
