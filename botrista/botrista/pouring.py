@@ -30,7 +30,7 @@ class Pouring(Node):
                                ParameterDescriptor(
                                    description="Z distance to move to before pouring"))
         self.offset = self.get_parameter("pour_begin_offset")\
-                             .get_parameter_value().double_value
+            .get_parameter_value().double_value
 
         # Creating tf listener
         self.tf_buffer = Buffer()
@@ -50,6 +50,9 @@ class Pouring(Node):
                                            'pour_action',
                                            self.pour_callback,
                                            callback_group=self.cb)
+
+        # Creating action server
+        self._action_server = ActionServer(self, )
 
     async def pour_callback(self, goal_handle):
         # TODO: Fill in
@@ -84,7 +87,7 @@ class Pouring(Node):
         standoff_point = startPoint
         standoff_point.z += self.offset
         standoffPose = Pose(position=standoff_point,
-                             orientation=startOre)
+                            orientation=startOre)
         waypoints.append(standoffPose)
         waypoints.insert(0, standoffPose)
 
