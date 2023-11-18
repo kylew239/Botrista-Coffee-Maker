@@ -52,7 +52,11 @@ class Pouring(Node):
                                            callback_group=self.cb)
 
         # Creating action server
-        self._action_server = ActionServer(self, )
+        self._action_server = ActionServer(self,
+                                           PourAction,
+                                           'pour_action',
+                                           self.pour_callback,
+                                           callback_group=self.cb)
 
     async def pour_callback(self, goal_handle):
         # TODO: Fill in
