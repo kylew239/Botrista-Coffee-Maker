@@ -1,5 +1,13 @@
-# Request
+# Goal
+float64 spiral_radius
+int32 num_points
+bool start_outside
+float64 num_loops
+string pour_frame
+float64 max_speed
 ---
 # Result
+bool status
 ---
 # Feedback
+string stage
