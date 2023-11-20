@@ -32,7 +32,7 @@ class Kettle(Node):
         self.grasp_plan = GraspPlan(
             Pose(
                 position=Point(
-                    x=0.3,
+                    x=0.4,
                     y=0.0,
                     z=0.5
                 ),
@@ -54,7 +54,7 @@ class Kettle(Node):
                 position=Point(
                     x=0.5,
                     y=0.0,
-                    z=0.3
+                    z=0.4
                 ),
                 orientation=orientation
             )
