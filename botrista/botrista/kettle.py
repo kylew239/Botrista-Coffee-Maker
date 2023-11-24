@@ -9,8 +9,11 @@ from control_msgs.msg import GripperCommand
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
+<<<<<<< HEAD
 from rclpy.time import Time
 from rclpy.callback_groups import ReentrantCallbackGroup
+=======
+>>>>>>> 3f85792 (removed test code from kettle)
 
 
 class Kettle(Node):
