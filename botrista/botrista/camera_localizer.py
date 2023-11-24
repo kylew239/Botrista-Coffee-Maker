@@ -4,6 +4,7 @@ from std_msgs.msg import Header
 from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
+import numpy as np
 
 
 class CameraLocalizer(Node):
@@ -49,6 +50,25 @@ class CameraLocalizer(Node):
 
         except Exception as e:
             pass
+
+    def filter(self, mean, sigma, zt):
+        # for orientation we can take advantage of the fact that the tags
+        # are always pointed up. The same as the panda_link0.
+
+        # for the state transition it shouldn't move
+        A = np.identity(7)
+        B = None  # No control signal
+        R = np.array([
+            []
+        ])
+
+        # for the measurement model the tags orientation should
+        # always be predicted to be straight up and the rest of the measurement
+        # should be the same
+
+        mean_prediction = A@mean
+
+        pass
 
 
 def camera_localizer_entry(args=None):
