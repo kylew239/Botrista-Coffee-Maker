@@ -71,7 +71,7 @@ class FilterTag:
 
     def __init__(self,
                  tf_broadcaster,
-                 tf_buffer,
+                 tf_buffer: Buffer,
                  clock,
                  target_frame,
                  source_frame):
