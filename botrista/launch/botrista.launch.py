@@ -37,7 +37,10 @@ def generate_launch_description():
                 FindPackageShare("botrista"),
                 "launch",
                 "realsense.launch.py"
-            ])
+            ]),
+            launch_arguments={
+                'hardware_type': LaunchConfiguration('hardware_type')
+            }.items(),
         ),
         IncludeLaunchDescription(
             PathJoinSubstitution([
