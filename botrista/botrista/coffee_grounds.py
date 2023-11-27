@@ -1,6 +1,7 @@
 from rclpy.node import Node
 import rclpy
 from moveit_wrapper.moveitapi import MoveItApi
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from geometry_msgs.msg import (
     Pose,
     Point,
@@ -9,7 +10,10 @@ from geometry_msgs.msg import (
     TransformStamped,
     Transform
 )
-from rclpy.action import ActionServer
+from franka_msgs.action import (
+    Grasp,
+)
+from rclpy.action import ActionServer, ActionClient
 from std_msgs.msg import Header
 from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
@@ -42,19 +46,48 @@ class CoffeeGrounds(Node):
             self,
             GroundsAction,
             'dump',
-            self.dump_coffee_filter)        
+            self.dump_coffee_filter)   
+          
+        # Create tf listener
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.tf_parent_frame = "panda_link0"
 
-    def fill_coffee_maker(self):
+        # Moveit Wrapper Object
+        self.moveit = MoveItApi(self,
+                                "panda_link0",
+                                "panda_hand_tcp",
+                                "panda_manipulator",
+                                "joint_states",
+                                "panda")
+
+    def fill_coffee_maker(self, goal_handle):
+        result = GroundsAction()
+        result.status = 0
         self.measure_coffee_height()
+        result.status = 1
         self.grab_scoop()
+        result.status = 2
         self.scoop_grounds()
+        result.status = 3
         self.dump_grounds()
+        result.status = 4
         self.return_scoop()
+        result.status = 5
+        result.complete = True
+        return result
 
-    def dump_coffee_filter(self):
+    def dump_coffee_filter(self, goal_handle):
+        result = GroundsAction()
+        result.status = 0
         self.grab_filter()
+        result.status = 1
         self.flip_shake_filter()
+        result.status = 2
         self.place_filter()
+        result.status = 3
+        result.complete = True
+        return result
 
     def grab_scoop(self):
         pass
