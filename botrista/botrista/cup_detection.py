@@ -80,12 +80,12 @@ class CupDetection(Node):
     def timer_callback(self):
         if self.state == State.CUP:
             self.cup_tf.header.stamp = self.get_clock().now().to_msg()
-            self.cup_tf.header.frame_id = "camera_localizer_tag"
+            self.cup_tf.header.frame_id = "filtered_camera_localizer_tag"
             self.cup_tf.child_frame_id = "cup_location"
             self.cup_tf.transform.translation = Vector3(
-                                            x = self.cup_x,
-                                            y = self.cup_y,
-                                            z = 0.015)
+                                            x = -self.cup_x,
+                                            y = -self.cup_y,
+                                            z = 0.115)
             self.get_logger().info(str(self.cup_tf.transform.translation))
             self.transform_broadcaster.sendTransform(self.cup_tf)
 
@@ -97,7 +97,7 @@ class CupDetection(Node):
 
     def img_callback(self, Image):
         table = self.buffer.lookup_transform(
-            self.cam.tf_frame, "camera_localizer_tag", rclpy.time.Time()
+            self.cam.tf_frame, "filtered_camera_localizer_tag", rclpy.time.Time()
         )
         point = self.cam.project3dToPixel(
             (
@@ -149,7 +149,7 @@ class CupDetection(Node):
 
 def cup_detection_entry(args=None):
     rclpy.init(args=args)
-    time.sleep(1)
+    time.sleep(5)
     cup_detection = CupDetection()
     rclpy.spin(cup_detection)
     rclpy.shutdown()
