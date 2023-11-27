@@ -17,6 +17,7 @@ class Kettle(Node):
 
     def __init__(self):
         super().__init__("kettle")
+        pass
 
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
