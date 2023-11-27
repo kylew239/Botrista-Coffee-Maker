@@ -27,12 +27,19 @@ class CameraLocalizer(Node):
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.tags = ['camera_localizer_tag', 'kettle_tag',
                      'filter_tag', 'pour_over_tag']
+
         self.filters = [FilterTag(self.transform_broadcaster,
                                   self.buffer,
                                   self.get_clock(),
                                   "d435i_color_optical_frame",
-                                  tag)
-                        for tag in self.tags]
+                                  "camera_localizer_tag")]
+
+        self.filters.extend([FilterTag(self.transform_broadcaster,
+                                       self.buffer,
+                                       self.get_clock(),
+                                       "filtered_camera_localizer_tag",
+                                       tag,
+                                       predict_up=True) for tag in self.tags[1:]])
 
     async def timer_callback(self):
         try:
@@ -75,7 +82,8 @@ class FilterTag:
                  tf_buffer: Buffer,
                  clock,
                  target_frame,
-                 source_frame):
+                 source_frame,
+                 predict_up=False):
         self.mean = None
         self.sigma = np.identity(7) * 5.0
         self.tf_broadcaster = tf_broadcaster
@@ -83,6 +91,7 @@ class FilterTag:
         self.target_frame = target_frame
         self.source_frame = source_frame
         self.clock: Clock = clock
+        self.predict_up = predict_up
 
     def filter(self):
         now = self.clock.now()
@@ -117,20 +126,24 @@ class FilterTag:
     def kalman_filter(self, mean, sigma, zt):
         # for the state transition it shouldn't move
         A = np.identity(7)
-        R = np.identity(7) * 0.05
+        R = np.identity(7) * 0.01
 
         # measurement prediction is identity, the tag shouldn't be moving
         mean_prediction = A@mean
+
+        if self.predict_up:
+            mean_prediction[3] = 0.0
+            mean_prediction[4] = 0.0
 
         # measurement noise
         Q = np.array([
             [0.05, 0, 0, 0, 0, 0, 0],
             [0, 0.05, 0, 0, 0, 0, 0],
             [0, 0, 2.0, 0, 0, 0, 0],
-            [0, 0, 0, 5.0, 0, 0, 0],
-            [0, 0, 0, 0, 5.0, 0, 0],
-            [0, 0, 0, 0, 0, 5.0, 0],
-            [0, 0, 0, 0, 0, 0, 5.0]
+            [0, 0, 0, 10.0, 0, 0, 0],
+            [0, 0, 0, 0, 10.0, 0, 0],
+            [0, 0, 0, 0, 0, 10.0, 0],
+            [0, 0, 0, 0, 0, 0, 10.0]
         ])
         C = np.identity(7)
 

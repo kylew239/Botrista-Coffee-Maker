@@ -4,7 +4,7 @@ apriltag:                 # node name
   ros__parameters:
     # setup (defaults)
     image_transport: "compressed"  # image format: "raw" or "compressed"
-    family: 36h11         # tag family name: 16h5, 25h9, 36h11
+    family: 16h5         # tag family name: 16h5, 25h9, 36h11
     size: 0.080           # default tag edge size in meter
     profile: false        # print profiling information to stdout
 
@@ -12,7 +12,7 @@ apriltag:                 # node name
     max_hamming: 0        # maximum allowed hamming distance (corrected bits)
     detector:
       threads: 4         # number of threads
-      decimate: 2.0      # decimate resolution for quad detection
+      decimate: 1.0      # decimate resolution for quad detection
       blur: 0.2         # sigma of Gaussian blur for quad detection
       refine: 1           # snap to strong gradients
       sharpening: 0.25    # sharpening of decoded images
@@ -23,4 +23,4 @@ apriltag:                 # node name
     tag:
       ids:    [0, 1, 2, 3]         # tag IDs for which to publish transform
       frames: ['camera_localizer_tag', 'kettle_tag', 'filter_tag', 'pour_over_tag']           # frame names
-      sizes:  [0.140, 0.080, 0.080, 0.080]             # tag-specific edge size, overrides the default 'size'
+      sizes:  [0.1125, 0.075, 0.075, 0.075]             # tag-specific edge size, overrides the default 'size'
