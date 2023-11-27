@@ -35,6 +35,7 @@ def generate_launch_description():
                         'camera_name': 'd435i',
                         'device_type': 'd435i',
                         'rgb_camera.profile': '1920x1080x6',
+                        'rgb_camera.enable_auto_exposure': 'false',
                         'enable_depth': 'false',
                     }.items(),
                 ),
@@ -46,18 +47,18 @@ def generate_launch_description():
                 )
             )
         ),
-        # IncludeLaunchDescription(
-        #     PathJoinSubstitution([
-        #         FindPackageShare("realsense2_camera"),
-        #         "launch",
-        #         "rs_launch.py"
-        #     ]),
-        #     launch_arguments={
-        #         'camera_name': 'd405',
-        #         'device_type': 'd405',
-        #         'pointcloud.enable': 'true',
-        #     }.items(),
-        # ),
+        IncludeLaunchDescription(
+            PathJoinSubstitution([
+                FindPackageShare("realsense2_camera"),
+                "launch",
+                "rs_launch.py"
+            ]),
+            launch_arguments={
+                'camera_name': 'd405',
+                'device_type': 'd405',
+                'pointcloud.enable': 'true',
+            }.items(),
+        ),
         IncludeLaunchDescription(
             PathJoinSubstitution([
                 FindPackageShare("image_proc"),
@@ -75,10 +76,7 @@ def generate_launch_description():
                     "config",
                     "tag.yaml"
                 ])
-            ],
-            remappings={
-                'image_rect': 'image_raw',
-            }.items(),
+            ]
         ),
         Node(
             package="botrista",

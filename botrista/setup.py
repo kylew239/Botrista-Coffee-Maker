@@ -25,7 +25,8 @@ setup(
         'console_scripts': [
             'camera_localizer = botrista.camera_localizer:camera_localizer_entry',
             'pouring = botrista.pouring:main',
-            'kettle = botrista.kettle:kettle_entry'
+            'kettle = botrista.kettle:kettle_entry',
+            'tag_transform_lookup = botrista.tag_transform_lookup:tag_transform_entry',
         ],
     },
 )
