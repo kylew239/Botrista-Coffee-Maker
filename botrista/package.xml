@@ -14,9 +14,15 @@
 
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+
+  <exec_depend>moveit_wrapper</exec_depend>
+
   <exec_depend>rviz2</exec_depend>
   <exec_depend>moveitapi</exec_depend>
-
+  
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>image_geometry</exec_depend>
+`
   <exec_depend>botrista_interfcaes</exec_depend>
   <build_depend>botrista_interfaces</build_depend>
 
