@@ -6,6 +6,7 @@ from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 import numpy as np
+from rclpy.clock import Clock
 import asyncio
 import tf2_geometry_msgs
 
@@ -60,7 +61,7 @@ class CameraLocalizer(Node):
                 localizer_tag_to_franka_tf)
 
             for filter in self.filters:
-                await filter.filter()
+                filter.filter()
 
         except Exception as e:
             self.get_logger().warn(
@@ -81,31 +82,37 @@ class FilterTag:
         self.tf_buffer = tf_buffer
         self.target_frame = target_frame
         self.source_frame = source_frame
-        self.clock = clock
+        self.clock: Clock = clock
 
-    async def filter(self):
+    def filter(self):
+        now = self.clock.now()
+        s, _ = now.seconds_nanoseconds()
         try:
-            tf = await self.tf_buffer.lookup_transform_async(self.target_frame,
-                                                             self.source_frame,
-                                                             Time(seconds=0.0))
-        except Exception as e:
-            return
+            tf = self.tf_buffer.lookup_transform(self.target_frame,
+                                                 self.source_frame,
+                                                 Time(
+                                                     seconds=s - 1),
+                                                 Duration(seconds=int(1.0/6.0)))
+        except Exception:
+            tf = None
 
-        vec = self.tf_to_vec(tf)
-        if self.mean is None:
-            self.mean = vec
-        else:
-            self.mean, self.sigma = self.kalman_filter(
-                self.mean, self.sigma, vec)
+        if tf is not None:
+            vec = self.tf_to_vec(tf)
+            if self.mean is None:
+                self.mean = vec
+            else:
+                self.mean, self.sigma = self.kalman_filter(
+                    self.mean, self.sigma, vec)
 
-        filtered_tag = TransformStamped()
-        filtered_tag.header = Header(
-            stamp=self.clock.now().to_msg(),
-            frame_id=self.target_frame
-        )
-        filtered_tag.child_frame_id = "filtered_" + self.source_frame
-        filtered_tag.transform = self.vec_to_tf(self.mean)
-        self.tf_broadcaster.sendTransform(filtered_tag)
+        if self.mean is not None:
+            filtered_tag = TransformStamped()
+            filtered_tag.header = Header(
+                stamp=self.clock.now().to_msg(),
+                frame_id=self.target_frame
+            )
+            filtered_tag.child_frame_id = "filtered_" + self.source_frame
+            filtered_tag.transform = self.vec_to_tf(self.mean)
+            self.tf_broadcaster.sendTransform(filtered_tag)
 
     def kalman_filter(self, mean, sigma, zt):
         # for the state transition it shouldn't move

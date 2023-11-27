@@ -12,7 +12,7 @@ apriltag:                 # node name
     max_hamming: 0        # maximum allowed hamming distance (corrected bits)
     detector:
       threads: 4         # number of threads
-      decimate: 1.0      # decimate resolution for quad detection
+      decimate: 2.0      # decimate resolution for quad detection
       blur: 0.2         # sigma of Gaussian blur for quad detection
       refine: 1           # snap to strong gradients
       sharpening: 0.25    # sharpening of decoded images
