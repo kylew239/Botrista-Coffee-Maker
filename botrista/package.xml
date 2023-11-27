@@ -22,8 +22,8 @@
   
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>image_geometry</exec_depend>
-`
-  <exec_depend>botrista_interfcaes</exec_depend>
+
+  <exec_depend>botrista_interfaces</exec_depend>
   <build_depend>botrista_interfaces</build_depend>
 
   <export>
