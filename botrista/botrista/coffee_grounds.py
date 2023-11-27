@@ -9,9 +9,11 @@ from geometry_msgs.msg import (
     TransformStamped,
     Transform
 )
+from rclpy.action import ActionServer
 from std_msgs.msg import Header
 from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
+from botrista_interfaces.action import GroundsAction
 
 class CoffeeGrounds(Node):
     """
@@ -31,10 +33,16 @@ class CoffeeGrounds(Node):
         self.filter_handle_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.filter_center_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        
-
-    def timer_callback(self):
-        pass
+        self.scoop_action_server = ActionServer(
+            self,
+            GroundsAction,
+            'scoop',
+            self.fill_coffee_maker)
+        self.dump_action_server = ActionServer(
+            self,
+            GroundsAction,
+            'dump',
+            self.dump_coffee_filter)        
 
     def fill_coffee_maker(self):
         self.measure_coffee_height()
