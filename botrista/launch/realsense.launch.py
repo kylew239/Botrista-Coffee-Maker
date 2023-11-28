@@ -22,9 +22,10 @@ def generate_launch_description():
         ),
         GroupAction(
             actions=[
-                SetRemap(src='/d435i/color/image_raw',
+                SetRemap(src='/camera/d435i/color/image_raw',
                          dst='/image_raw'),
-                SetRemap(src='/d435i/color/camera_info', dst='/camera_info'),
+                SetRemap(src='/camera/d435i/color/camera_info',
+                         dst='/camera_info'),
                 IncludeLaunchDescription(
                     PathJoinSubstitution([
                         FindPackageShare("realsense2_camera"),
@@ -34,9 +35,21 @@ def generate_launch_description():
                     launch_arguments={
                         'camera_name': 'd435i',
                         'device_type': 'd435i',
-                        'rgb_camera.profile': '1920x1080x6',
+                        'rgb_camera.profile': '1280x720x6',
+                        'depth_module.profile': '1280x720x6',
+                        'enable_depth': 'true',
+                        'depth_module.enable_auto_exposure': 'false',
                         'rgb_camera.enable_auto_exposure': 'false',
-                        'enable_depth': 'false',
+                        'pointcloud.enable': 'true',
+                        'spatial_filter.enable': 'true',
+                        'temporal_filter.enable': 'true',
+                        'decimation_filter.enable': 'true',
+                        'depth_module.exposure': '3000',
+                        'json_file_path': PathJoinSubstitution([
+                            FindPackageShare("botrista"),
+                            "config",
+                            "d435i_config.json"
+                        ]),
                     }.items(),
                 ),
             ],
@@ -47,18 +60,18 @@ def generate_launch_description():
                 )
             )
         ),
-        IncludeLaunchDescription(
-            PathJoinSubstitution([
-                FindPackageShare("realsense2_camera"),
-                "launch",
-                "rs_launch.py"
-            ]),
-            launch_arguments={
-                'camera_name': 'd405',
-                'device_type': 'd405',
-                'pointcloud.enable': 'true',
-            }.items(),
-        ),
+        # IncludeLaunchDescription(
+        #     PathJoinSubstitution([
+        #         FindPackageShare("realsense2_camera"),
+        #         "launch",
+        #         "rs_launch.py"
+        #     ]),
+        #     launch_arguments={
+        #         'camera_name': 'd405',
+        #         'device_type': 'd405',
+        #         'pointcloud.enable': 'true',
+        #     }.items(),
+        # ),
         IncludeLaunchDescription(
             PathJoinSubstitution([
                 FindPackageShare("image_proc"),

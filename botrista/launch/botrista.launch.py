@@ -60,16 +60,16 @@ def generate_launch_description():
             package="botrista",
             executable="pouring"
         ),
-        Node(
-            package="botrista",
-            executable="cup_detection",
-            ros_arguments=[
-                "--params-file",
-                PathJoinSubstitution([
-                    FindPackageShare("botrista"),
-                    "config",
-                    "cam_cal.yaml"
-                ])
-            ],
-        )
+        # Node(
+        #     package="botrista",
+        #     executable="cup_detection",
+        #     ros_arguments=[
+        #         "--params-file",
+        #         PathJoinSubstitution([
+        #             FindPackageShare("botrista"),
+        #             "config",
+        #             "cam_cal.yaml"
+        #         ])
+        #     ],
+        # )
     ])

@@ -45,10 +45,12 @@ class CupDetection(Node):
             ),
         )
         self.lower_m = (
-            self.get_parameter("lower_mask").get_parameter_value().integer_array_value
+            self.get_parameter(
+                "lower_mask").get_parameter_value().integer_array_value
         )
         self.upper_m = (
-            self.get_parameter("upper_mask").get_parameter_value().integer_array_value
+            self.get_parameter(
+                "upper_mask").get_parameter_value().integer_array_value
         )
         # Initialzing variables
         self.cup_x = 0
@@ -83,9 +85,9 @@ class CupDetection(Node):
             self.cup_tf.header.frame_id = "filtered_camera_localizer_tag"
             self.cup_tf.child_frame_id = "cup_location"
             self.cup_tf.transform.translation = Vector3(
-                                            x = -self.cup_x,
-                                            y = -self.cup_y,
-                                            z = 0.115)
+                x=self.cup_x/2,
+                y=-self.cup_y,
+                z=0.115)
             self.get_logger().info(str(self.cup_tf.transform.translation))
             self.transform_broadcaster.sendTransform(self.cup_tf)
 
@@ -110,8 +112,8 @@ class CupDetection(Node):
         if self.state == State.START:
             cv_im = self.cv_bridge.imgmsg_to_cv2(Image, "bgr8")
             roi_im = cv_im[
-                pixel_tf[1] - 350 : pixel_tf[1] - 100,
-                pixel_tf[0] - 100 : pixel_tf[0] + 100,
+                pixel_tf[1] - 350: pixel_tf[1] - 100,
+                pixel_tf[0] - 100: pixel_tf[0] + 100,
                 :,
             ]
             lower_bound = np.asarray(
@@ -137,7 +139,7 @@ class CupDetection(Node):
             )
             if circles is not None:
                 circles = np.uint16(np.around(circles))
-                for i in circles[0,:]:
+                for i in circles[0, :]:
                     self.get_logger().info("Cup!")
                     (self.cup_x, self.cup_y, self.cup_z) = self.cam.projectPixelTo3dRay(
                         (i[0]+(pixel_tf[0]-100),
