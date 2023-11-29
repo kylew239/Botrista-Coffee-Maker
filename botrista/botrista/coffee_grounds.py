@@ -278,7 +278,35 @@ class CoffeeGrounds(Node):
 
 
     async def flip_shake_filter(self):
-        pass
+        tf = self.buffer.lookup_transform(
+            "panda_link0", "filtered_TRASH_tag", Time())
+
+        approach_pose = Pose(
+            position=self.filter_dump_pos_approach,
+            orientation=self.dump_orientation_upright
+        )
+        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
+
+        grasp_pose = Pose(
+            position=self.filter_dump_pos,
+            orientation=self.dump_orientation_flipped
+        )
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
+
+        retreat_pose = Pose(
+            position=self.filter_dump_pos_retreat,
+            orientation=self.dump_orientation_upright
+        )
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
+
+        grasp_plan = GraspPlan(
+            approach_pose=approach_pose,
+            grasp_pose=grasp_pose,
+            grasp_command=self.grasp_command_filter,
+            retreat_pose=retreat_pose,
+        )
+
+        await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
 
     async def place_filter(self):
