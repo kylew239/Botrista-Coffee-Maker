@@ -53,7 +53,8 @@ class CoffeeGrounds(Node):
         self.grounds_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.grounds_offset_orient_retreat = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.filter_handle_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_center_offset_orient_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_center_offset_orient_flipped = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation_dump = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
 
@@ -182,23 +183,23 @@ class CoffeeGrounds(Node):
 
     async def dump_grounds(self):
         tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered__tag", Time())
+            "panda_link0", "filtered_XXXX_tag", Time())
 
         approach_pose = Pose(
-            position=self.grounds_offset_pos_approach,
-            orientation=self.grounds_offset_orient_approach
+            position=self.filter_center_offset_pos_approach,
+            orientation=self.filter_center_offset_orient_upright
         )
         approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
 
         grasp_pose = Pose(
-            position=self.grounds_offset_pos,
-            orientation=self.grounds_offset_orient
+            position=self.filter_center_offset_pos,
+            orientation=self.filter_center_offset_orient_flipped
         )
         grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
 
         retreat_pose = Pose(
-            position=self.grounds_offset_pos_retreat,
-            orientation=self.grounds_offset_orient_retreat
+            position=self.filter_center_offset_pos_retreat,
+            orientation=self.filter_center_offset_orient_upright
         )
         retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
 
@@ -245,7 +246,35 @@ class CoffeeGrounds(Node):
     
 
     async def grab_filter(self):
-        pass
+        tf = self.buffer.lookup_transform(
+            "panda_link0", "filtered_XXXX_tag", Time())
+
+        approach_pose = Pose(
+            position=self.filter_handle_offset_pos_approach,
+            orientation=self.filter_handle_offset_orient
+        )
+        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
+
+        grasp_pose = Pose(
+            position=self.filter_handle_offset_pos,
+            orientation=self.filter_handle_offset_orient
+        )
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
+
+        retreat_pose = Pose(
+            position=self.filter_handle_offset_pos_retreat,
+            orientation=self.filter_handle_offset_orient
+        )
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
+
+        grasp_plan = GraspPlan(
+            approach_pose=approach_pose,
+            grasp_pose=grasp_pose,
+            grasp_command=self.grasp_command_filter,
+            retreat_pose=retreat_pose,
+        )
+
+        await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
 
     async def flip_shake_filter(self):
@@ -253,7 +282,35 @@ class CoffeeGrounds(Node):
 
 
     async def place_filter(self):
-        pass
+        tf = self.buffer.lookup_transform(
+            "panda_link0", "filtered_XXXX_tag", Time())
+
+        approach_pose = Pose(
+            position=self.filter_handle_offset_pos_approach,
+            orientation=self.filter_handle_offset_orient
+        )
+        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
+
+        grasp_pose = Pose(
+            position=self.filter_handle_offset_pos,
+            orientation=self.filter_handle_offset_orient
+        )
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
+
+        retreat_pose = Pose(
+            position=self.filter_handle_offset_pos_retreat,
+            orientation=self.filter_handle_offset_orient
+        )
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
+
+        grasp_plan = GraspPlan(
+            approach_pose=approach_pose,
+            grasp_pose=grasp_pose,
+            grasp_command=self.grasp_command_open,
+            retreat_pose=retreat_pose,
+        )
+
+        await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
 
     async def measure_coffee_height(self):
