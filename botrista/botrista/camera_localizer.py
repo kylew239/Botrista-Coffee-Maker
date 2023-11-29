@@ -3,7 +3,7 @@ import rclpy
 from rclpy.time import Time
 from std_msgs.msg import Header
 from rclpy.duration import Duration
-from tf2_ros import TransformListener, Buffer, TransformBroadcaster
+from tf2_ros import TransformListener, Buffer, TransformBroadcaster, StaticTransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 import numpy as np
 from rclpy.clock import Clock
@@ -23,6 +23,33 @@ class CameraLocalizer(Node):
         self.buffer = Buffer()
         self.transform_listener = TransformListener(self.buffer, self, qos=10)
         self.transform_broadcaster = TransformBroadcaster(self, qos=10)
+        self.static_transform_broadcaster = StaticTransformBroadcaster(
+            self, qos=10)
+
+        # publish d405 to franka
+        self.static_transform_broadcaster.sendTransform(
+            self.transform_broadcaster.sendTransform(
+                TransformStamped(
+                    header=Header(
+                        stamp=self.get_clock().now().to_msg(),
+                        frame_id="panda_hand"),
+                    child_frame_id="d405_link",
+                    transform=Transform(
+                        translation=Vector3(
+                            x=0.04,
+                            y=0.0,
+                            z=0.05
+                        ),
+                        rotation=Quaternion(
+                            x=0.706825,
+                            y=-0.0005629,
+                            z=0.707388,
+                            w=0.0005633
+                        )
+                    )
+                )
+            )
+        )
 
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.tags = ['camera_localizer_tag', 'kettle_tag',
@@ -52,8 +79,8 @@ class CameraLocalizer(Node):
 
             localizer_tag_to_franka_tf.transform = Transform(
                 translation=Vector3(
-                    x=0.555-0.2159/2,
-                    y=0.302-0.2159/2,
+                    x=0.555-0.200/2,
+                    y=0.302-0.200/2,
                 ),
                 rotation=Quaternion(
                     x=0.0,

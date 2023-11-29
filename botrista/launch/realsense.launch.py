@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node, SetRemap
+from launch_ros.actions import Node, SetRemap, ComposableNodeContainer
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import IncludeLaunchDescription, GroupAction, DeclareLaunchArgument
 from launch.substitutions import (
@@ -35,7 +35,7 @@ def generate_launch_description():
                     launch_arguments={
                         'camera_name': 'd435i',
                         'device_type': 'd435i',
-                        'rgb_camera.profile': '1280x720x6',
+                        'rgb_camera.profile': '1920x1080x6',
                         'depth_module.profile': '1280x720x6',
                         'enable_depth': 'true',
                         'depth_module.enable_auto_exposure': 'false',
@@ -60,18 +60,27 @@ def generate_launch_description():
                 )
             )
         ),
-        # IncludeLaunchDescription(
-        #     PathJoinSubstitution([
-        #         FindPackageShare("realsense2_camera"),
-        #         "launch",
-        #         "rs_launch.py"
-        #     ]),
-        #     launch_arguments={
-        #         'camera_name': 'd405',
-        #         'device_type': 'd405',
-        #         'pointcloud.enable': 'true',
-        #     }.items(),
-        # ),
+        IncludeLaunchDescription(
+            PathJoinSubstitution([
+                FindPackageShare("realsense2_camera"),
+                "launch",
+                "rs_launch.py"
+            ]),
+            launch_arguments={
+                'camera_name': 'd405',
+                'device_type': 'd405',
+                'pointcloud.enable': 'true',
+                'enable_depth': 'true',
+                'spatial_filter.enable': 'true',
+                'temporal_filter.enable': 'true',
+                'decimation_filter.enable': 'true',
+                'json_file_path': PathJoinSubstitution([
+                    FindPackageShare("botrista"),
+                    "config",
+                    "d405_config.json"
+                ]),
+            }.items(),
+        ),
         IncludeLaunchDescription(
             PathJoinSubstitution([
                 FindPackageShare("image_proc"),
