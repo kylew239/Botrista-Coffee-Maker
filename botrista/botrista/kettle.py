@@ -87,7 +87,14 @@ class Kettle(Node):
         approach_pose = tf2_geometry_msgs.do_transform_pose(
             self.retreat_pose, tf)
 
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(self.grasp_pose, tf)
+        hover_pose = Pose(
+            position=Point(
+                x=0.09,
+                y=0.043,
+                z=0.18),
+            orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
+        )
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
         retreat_pose = tf2_geometry_msgs.do_transform_pose(
             self.approach_pose, tf)
 
@@ -97,7 +104,7 @@ class Kettle(Node):
             grasp_command=Grasp.Goal(
                 width=0.04,  # open the gripper wider to release the kettle
                 force=50.0,
-                speed=0.05,
+                speed=0.2,
             ),
             retreat_pose=retreat_pose,
         )

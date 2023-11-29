@@ -26,31 +26,6 @@ class CameraLocalizer(Node):
         self.static_transform_broadcaster = StaticTransformBroadcaster(
             self, qos=10)
 
-        # publish d405 to franka
-        self.static_transform_broadcaster.sendTransform(
-            self.transform_broadcaster.sendTransform(
-                TransformStamped(
-                    header=Header(
-                        stamp=self.get_clock().now().to_msg(),
-                        frame_id="panda_hand"),
-                    child_frame_id="d405_link",
-                    transform=Transform(
-                        translation=Vector3(
-                            x=0.04,
-                            y=0.0,
-                            z=0.05
-                        ),
-                        rotation=Quaternion(
-                            x=0.706825,
-                            y=-0.0005629,
-                            z=0.707388,
-                            w=0.0005633
-                        )
-                    )
-                )
-            )
-        )
-
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.tags = ['camera_localizer_tag', 'kettle_tag',
                      'filter_tag', 'pour_over_tag']
@@ -69,6 +44,29 @@ class CameraLocalizer(Node):
                                        predict_up=True) for tag in self.tags[1:]])
 
     async def timer_callback(self):
+        self.transform_broadcaster.sendTransform(
+            # publish d405 to franka
+            TransformStamped(
+                header=Header(
+                    stamp=self.get_clock().now().to_msg(),
+                    frame_id="panda_hand"),
+                child_frame_id="d405_link",
+                transform=Transform(
+                    translation=Vector3(
+                        x=0.04,
+                        y=0.0,
+                        z=0.05
+                    ),
+                    rotation=Quaternion(
+                        x=0.706825,
+                        y=-0.0005629,
+                        z=0.707388,
+                        w=0.0005633
+                    )
+                )
+            )
+        )
+
         try:
             # find transform to localizer tag
             localizer_tag_to_franka_tf = TransformStamped()
