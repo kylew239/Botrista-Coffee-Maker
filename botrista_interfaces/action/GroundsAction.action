@@ -1,0 +1,5 @@
+bool trigger
+---
+bool complete
+---
+int32 status
