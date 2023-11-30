@@ -26,7 +26,7 @@ setup(
             'camera_localizer = botrista.camera_localizer:camera_localizer_entry',
             'pouring = botrista.pouring:main',
             'kettle = botrista.kettle:kettle_entry',
-            'filter_grasp = botrista.filter_grasp:filter_grasp_entry',
+            'filter_grasp = botrista.filter_grasp:main',
             'tag_transform_lookup = botrista.tag_transform_lookup:tag_transform_entry',
             'cup_detection = botrista.cup_detection:cup_detection_entry',
             'delay_node = botrista.delay_node:delay_entry',

@@ -10,13 +10,10 @@ from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
-from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.time import Time
-from rclpy.callback_groups import ReentrantCallbackGroup
 
-class grasp_filter(Node):
+class filter_grasp(Node):
     def __init__(self):
-        super().__init__("grasp_filter")
+        super().__init__("filter_grasp")
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
@@ -28,57 +25,38 @@ class grasp_filter(Node):
             base_frame=base_frame,
             end_effector_frame=end_effector_frame,
             group_name=group_name,
-            joint_state_topic="joint_states",
+            joint_state_topic="/franka/joint_states",
         )
         self.grasp_planner = GraspPlanner(
             self.go_position, "panda_gripper/grasp")
 
         self.srv = self.create_service(
-            Empty, "grab", self.grab_filter, callback_group=ReentrantCallbackGroup())
+            Empty, "grab_filter", self.grab_filter, callback_group=ReentrantCallbackGroup())
         
+        # measured poses
+        self.approach_pose = Pose(
+            position=Point(x=0.006, y=0.05, z=0.536387),
+            orientation=Quaternion(x=0.99683, y=-0.070782, z=0.003827, w=0.0360623)
+        )
+        self.grasp_pose = Pose(
+            position=Point(x=-0.0522152, y=0.214896, z=0.436387),
+            orientation=Quaternion(x=0.99683, y=-0.070782, z=0.003827, w=0.0360623)
+        )
+        self.retreat_pose = Pose(
+            position=Point(x=-0.0522152, y=0.214896, z=0.586387),
+            orientation=Quaternion(x=0.99683, y=-0.070782, z=0.003827, w=0.0360623)
+        )
+
     async def grab_filter(self, request, response):
-        approach_point = Point()
-        approach_q = Quaternion()
-        approach_pose = Pose(approach_point, approach_q)
-        to_frame_rel = 'panda_link0'
-        from_frame_rel = 'filter_handle'
-        if self.tf_buffer.can_transform(
-            to_frame_rel,
-            from_frame_rel,
-            rclpy.time.Time()) == 1:
-            t = self.tf_buffer.lookup_transform(
-                to_frame_rel,
-                from_frame_rel,
-                rclpy.time.Time())
+        tf = self.tf_buffer.lookup_transform(
+            "panda_link0", "filtered_filter_tag", Time())
 
-            approach_point.x = t.transform.translation.x
-            approach_point.y = t.transform.translation.y
-            approach_point.z = t.transform.translation.z + 0.22
-
-        # create transform listener and buffer
-        # get the rotation related to the e-e
-        to_frame_rel2 = 'panda_hand_tcp'
-        from_frame_rel2 = 'filter_handle'
-        if self.tf_buffer.can_transform(
-            to_frame_rel2,
-            from_frame_rel2,
-            rclpy.time.Time()) == 1:
-            t = self.tf_buffer.lookup_transform(
-                to_frame_rel2,
-                from_frame_rel2,
-                rclpy.time.Time())
-            approach_q = t.transform.rotation
-
-        grasp_point = approach_point
-        grasp_point.z = approach_point - 0.1
-        grasp_q = approach_q
-        grasp_pose = Pose(grasp_point, grasp_q)
-
-        retreat_point = approach_point
-        retreat_point.z = approach_point + 0.2
-        retreat_q = approach_q
-        retreat_pose = Pose(retreat_point, retreat_q)
-
+        approach_pose = tf2_geometry_msgs.do_transform_pose(
+            self.approach_pose, tf)
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(self.grasp_pose, tf)
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(
+            self.retreat_pose, tf)
+        
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
             grasp_pose=grasp_pose,
@@ -96,7 +74,7 @@ class grasp_filter(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    res = grasp_filter()
+    res = filter_grasp()
     rclpy.spin(res) 
     rclpy.shutdown()
 

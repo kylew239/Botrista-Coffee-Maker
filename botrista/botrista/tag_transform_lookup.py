@@ -8,7 +8,7 @@ class TagTransformLookup(Node):
     def __init__(self):
         super().__init__("tag_transform_lookup")
 
-        self.target_frame = "filtered_kettle_tag"
+        self.target_frame = "filtered_filter_tag"
         self.source_frame = "panda_hand_tcp"
 
         self.buffer = Buffer()

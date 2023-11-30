@@ -112,23 +112,6 @@ class CameraLocalizer(Node):
             for filter in self.filters:
                 filter.filter()
 
-            # find transform from filter_handle to filter tag
-            localizer_tag_to_pour_tf = TransformStamped()
-            localizer_tag_to_pour_tf.header = Header(
-                stamp=self.get_clock().now().to_msg(), frame_id="pour_over_tag"
-            )
-
-            localizer_tag_to_pour_tf.transform = Transform(
-                translation=Vector3(
-                    x= 0.15,
-                    y= 0.03
-                ),
-                rotation=Quaternion(x=0.0, y=0.0, z=1.0, w=0.0),
-            )
-
-            localizer_tag_to_pour_tf.child_frame_id = "bottle_handle"
-            self.transform_broadcaster.sendTransform(localizer_tag_to_pour_tf)
-
         except Exception as e:
             self.get_logger().warn(
                 f"Exception: {e}")
