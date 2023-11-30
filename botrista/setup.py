@@ -27,7 +27,8 @@ setup(
             'pouring = botrista.pouring:main',
             'kettle = botrista.kettle:kettle_entry',
             'tag_transform_lookup = botrista.tag_transform_lookup:tag_transform_entry',
-            'cup_detection = botrista.cup_detection:cup_detection_entry'
+            'cup_detection = botrista.cup_detection:cup_detection_entry',
+            'handle_detector = botrista.handle_detector:handle_detector_entry',
         ],
     },
 )

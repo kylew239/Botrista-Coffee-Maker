@@ -60,6 +60,10 @@ def generate_launch_description():
             package="botrista",
             executable="pouring"
         ),
+        Node(
+            package="botrista",
+            executable="handle_detector"
+        )
         # Node(
         #     package="botrista",
         #     executable="cup_detection",
