@@ -11,7 +11,6 @@ from std_msgs.msg import Empty
 import time
 from enum import Enum, auto
 from image_geometry.cameramodels import PinholeCameraModel
-# cup height 115mm
 
 
 class State(Enum):
@@ -98,17 +97,20 @@ class CupDetection(Node):
         self.cam.fromCameraInfo(cam_info)
 
     def img_callback(self, Image):
-        table = self.buffer.lookup_transform(
-            self.cam.tf_frame, "filtered_camera_localizer_tag", rclpy.time.Time()
-        )
-        point = self.cam.project3dToPixel(
-            (
-                table.transform.translation.x,
-                table.transform.translation.y,
-                table.transform.translation.z
+        try:
+            table = self.buffer.lookup_transform(
+                self.cam.tf_frame, "filtered_camera_localizer_tag", rclpy.time.Time()
             )
-        )
-        pixel_tf = (int(point[0]), int(point[1]))
+            point = self.cam.project3dToPixel(
+                (
+                    table.transform.translation.x,
+                    table.transform.translation.y,
+                    table.transform.translation.z
+                )
+            )
+            pixel_tf = (int(point[0]), int(point[1]))
+        except Exception as e:
+            self.get_logger().warn(f"Exception: {e}")
         if self.state == State.START:
             cv_im = self.cv_bridge.imgmsg_to_cv2(Image, "bgr8")
             roi_im = cv_im[
