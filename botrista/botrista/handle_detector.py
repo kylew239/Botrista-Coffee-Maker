@@ -91,7 +91,7 @@ class HandleDetector(Node):
         handle_contour = self.find_handle_contour(thresholded)
 
         if handle_contour is not None:
-            pose = self.contour_to_depth(handle_contour, thresholded)
+            pose = self.contour_to_depth(handle_contour, thresholded, cv_img)
 
             try:
                 tf = self.tf_buffer.lookup_transform("panda_link0",
@@ -111,7 +111,7 @@ class HandleDetector(Node):
                                 y=pose_panda0.position.y,
                                 z=pose_panda0.position.z
                             ),
-                            rotation=pose_panda0.orientation
+                            rotation=Quaternion()
                         )
                     )
                 )
@@ -119,7 +119,7 @@ class HandleDetector(Node):
                 self.get_logger().warn(f"Exception: {e}")
                 pass
 
-    def contour_to_depth(self, contour, image):
+    def contour_to_depth(self, contour, image, raw):
 
         # Get center of the contour
         M = cv2.moments(contour)
@@ -141,8 +141,13 @@ class HandleDetector(Node):
         # draw the masked values
         depth_mask_colormap = cv2.applyColorMap(cv2.convertScaleAbs(
             depth_mask, alpha=0.03), cv2.COLORMAP_JET)
+
+        contour_img = cv2.drawContours(
+            raw, [contour], -1, (255, 255, 255), 2)
+        contour_img = cv2.circle(
+            contour_img, (cX, cY), 7, (255, 255, 255), -1)
         self.depth_publisher.publish(
-            self.cv_bridge.cv2_to_imgmsg(depth_mask_colormap))
+            self.cv_bridge.cv2_to_imgmsg(contour_img))
 
         # use all non-zero values as the depth, zero values are invalid
         depth_mask_filtered = depth_mask[depth_mask != 0]

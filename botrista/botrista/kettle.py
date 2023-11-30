@@ -4,15 +4,15 @@ import tf2_geometry_msgs
 from tf2_ros import Buffer, TransformListener, TransformBroadcaster, StaticTransformBroadcaster
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
-from geometry_msgs.msg import Pose, Point, Quaternion
+from std_msgs.msg import Header
+from geometry_msgs.msg import Pose, Point, Quaternion, PointStamped
 from control_msgs.msg import GripperCommand
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
 from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.time import Time
-from rclpy.callback_groups import ReentrantCallbackGroup
+from time import sleep
 
 
 class Kettle(Node):
@@ -34,19 +34,15 @@ class Kettle(Node):
         self.release_srv = self.create_service(
             Empty, "place", self.place, callback_group=ReentrantCallbackGroup())
 
-        # measured poses
-        self.approach_pose = Pose(
-            position=Point(x=0.006, y=0.05, z=0.20),
-            orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
+        self.observe_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.40),
+            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
         )
-        self.grasp_pose = Pose(
-            position=Point(x=0.097, y=0.043, z=0.15),
-            orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
-        )
-        self.retreat_pose = Pose(
-            position=Point(x=0.097, y=0.043, z=0.25),
-            orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
-        )
+
+        # grasp points in handle frame
+        self.approach_point = Point(x=0.0, y=0.0, z=0.10)
+        self.grasp_point = Point(x=0.0, y=0.0, z=0.0)
+        self.retreat_point = Point(x=0.0, y=0.0, z=0.10)
 
     async def grab(self, request, response):
         """
@@ -55,11 +51,69 @@ class Kettle(Node):
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_kettle_tag", Time())
 
-        approach_pose = tf2_geometry_msgs.do_transform_pose(
-            self.approach_pose, tf)
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(self.grasp_pose, tf)
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(
-            self.retreat_pose, tf)
+        # go to the observe pose
+        observe_pose = tf2_geometry_msgs.do_transform_pose(
+            self.observe_pose, tf)
+        await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
+
+        # get the handle tf
+        sleep(5)
+        handle_tf = self.buffer.lookup_transform(
+            "panda_link0", "handle", Time())
+
+        # observe_point = tf2_geometry_msgs.do_transform_point(
+        #     PointStamped(
+        #         header=Header(
+        #             frame_id="handle",
+        #             stamp=self.get_clock().now().to_msg()
+        #         ),
+        #         point=Point(
+        #             x=self.approach_point.x,
+        #             y=self.approach_point.y,
+        #             z=0.15
+        #         )), handle_tf)
+
+        # await self.moveit_api.plan_async(point=observe_point.point, orientation=Quaternion(
+        #     x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
+        # sleep(2)
+
+        # put the grasp points in into panda frame
+        approach_point = tf2_geometry_msgs.do_transform_point(
+            PointStamped(
+                header=Header(
+                    frame_id="handle",
+                    stamp=self.get_clock().now().to_msg()
+                ),
+                point=self.approach_point), handle_tf)
+        grasp_point = tf2_geometry_msgs.do_transform_point(
+            PointStamped(
+                header=Header(
+                    frame_id="handle",
+                    stamp=self.get_clock().now().to_msg()
+                ),
+                point=self.grasp_point), handle_tf)
+        retreat_point = tf2_geometry_msgs.do_transform_point(
+            PointStamped(
+                header=Header(
+                    frame_id="handle",
+                    stamp=self.get_clock().now().to_msg()
+                ),
+                point=self.retreat_point), handle_tf)
+
+        approach_pose = Pose(
+            position=approach_point.point,
+            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
+        )
+
+        grasp_pose = Pose(
+            position=approach_point.point,
+            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
+        )
+
+        retreat_pose = Pose(
+            position=approach_point.point,
+            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
+        )
 
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
