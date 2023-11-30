@@ -33,6 +33,12 @@ class Kettle(Node):
 
         self.release_srv = self.create_service(
             Empty, "place", self.place, callback_group=ReentrantCallbackGroup())
+        
+        self.delay_client = self.create_client(
+            Empty, "delay", callback_group=ReentrantCallbackGroup()
+        )
+        while not self.delay_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().warn("Waiting for delay service")
 
         self.observe_pose = Pose(
             position=Point(x=0.0, y=0.0, z=0.40),
@@ -40,41 +46,52 @@ class Kettle(Node):
         )
 
         # grasp points in handle frame
-        self.approach_point = Point(x=0.0, y=0.0, z=0.10)
-        self.grasp_point = Point(x=0.0, y=0.0, z=0.0)
+        self.approach_point = Point(x=0.0, y=0.0, z=0.15)
+        self.grasp_point = Point(x=0.02, y=0.0, z=0.0)
         self.retreat_point = Point(x=0.0, y=0.0, z=0.10)
+
 
     async def grab(self, request, response):
         """
         Grabs the kettle from its stand.
         """
-        tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered_kettle_tag", Time())
+        try:
+            tf = self.buffer.lookup_transform(
+                "panda_link0", "filtered_kettle_tag", Time())
+
+        except Exception as e:
+            return response
+            self.get_logger().warn(e)
+
+        
 
         # go to the observe pose
         observe_pose = tf2_geometry_msgs.do_transform_pose(
             self.observe_pose, tf)
         await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
-
+        await self.delay_client.call_async(Empty.Request())
         # get the handle tf
-        sleep(5)
         handle_tf = self.buffer.lookup_transform(
-            "panda_link0", "handle", Time())
+            "panda_link0", "handle", time=Time(seconds=0.0))
+        self.get_logger().warn(f"HANDLE TF: {handle_tf}")
 
-        # observe_point = tf2_geometry_msgs.do_transform_point(
-        #     PointStamped(
-        #         header=Header(
-        #             frame_id="handle",
-        #             stamp=self.get_clock().now().to_msg()
-        #         ),
-        #         point=Point(
-        #             x=self.approach_point.x,
-        #             y=self.approach_point.y,
-        #             z=0.15
-        #         )), handle_tf)
+        observe_point = tf2_geometry_msgs.do_transform_point(
+            PointStamped(
+                header=Header(
+                    frame_id="handle",
+                    stamp=self.get_clock().now().to_msg()
+                ),
+                point=Point(
+                    x=self.approach_point.x,
+                    y=self.approach_point.y,
+                    z=0.15
+                )), handle_tf)
 
-        # await self.moveit_api.plan_async(point=observe_point.point, orientation=Quaternion(
-        #     x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
+        await self.moveit_api.plan_async(point=observe_point.point, orientation=Quaternion(
+            x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
+        await self.delay_client.call_async(Empty.Request())
+        handle_tf = self.buffer.lookup_transform(
+            "panda_link0", "handle", time=Time(seconds=0.0))
         # sleep(2)
 
         # put the grasp points in into panda frame
@@ -106,12 +123,12 @@ class Kettle(Node):
         )
 
         grasp_pose = Pose(
-            position=approach_point.point,
+            position=grasp_point.point,
             orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
         )
 
         retreat_pose = Pose(
-            position=approach_point.point,
+            position=retreat_point.point,
             orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
         )
 
@@ -119,7 +136,7 @@ class Kettle(Node):
             approach_pose=approach_pose,
             grasp_pose=grasp_pose,
             grasp_command=Grasp.Goal(
-                width=0.02,
+                width=0.03,
                 force=50.0,
                 speed=0.05,
             ),
@@ -137,6 +154,7 @@ class Kettle(Node):
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_kettle_tag", Time())
 
+        
         # play the grasp plan backwards to place the kettle
         approach_pose = tf2_geometry_msgs.do_transform_pose(
             self.retreat_pose, tf)

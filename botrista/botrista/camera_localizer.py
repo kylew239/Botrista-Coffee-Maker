@@ -21,10 +21,10 @@ class CameraLocalizer(Node):
 
         # create transform listener and buffer
         self.buffer = Buffer()
-        self.transform_listener = TransformListener(self.buffer, self, qos=10)
-        self.transform_broadcaster = TransformBroadcaster(self, qos=10)
+        self.transform_listener = TransformListener(self.buffer, self)
+        self.transform_broadcaster = TransformBroadcaster(self)
         self.static_transform_broadcaster = StaticTransformBroadcaster(
-            self, qos=10)
+            self)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.tags = ['camera_localizer_tag', 'kettle_tag',
