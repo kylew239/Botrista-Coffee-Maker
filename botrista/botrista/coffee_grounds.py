@@ -229,7 +229,7 @@ class CoffeeGrounds(Node):
         await self.return_scoop()
 
         goal_handle.succeed()
-        return GroundsAction.Result(complete=True)
+        return EmptyAction.Result(complete=True)
 
     async def grab_scoop(self):
         """

@@ -21,16 +21,16 @@ class Botrista(Node):
     Description:
         Waits to detect an empty cup placed in the detection area, then runs following routine:
             1. Turns on Kettle (action)
-            2. Pick up Filter from filter stand (action)
-            3. Place Filter on Pot (action)
+            2. Pick up Filter from filter stand (pick_filter action)
+            3. Place Filter on Pot (place_filter_in_pot action)
             4. Scoop grounds (scoop action)
             5. Wait for boiling
             6. Pick up Kettle (pick_kettle action)
             7. Pour water from kettle (pour_action action)
             8. Place Kettle on kettle stand (place_kettle action)
             9. Wait for coffee grounds to soak
-            10. Pick up Filter from Pot (action)
-            11. Place Filter on filter stand (action)
+            10. Pick up Filter from Pot (pick_filter_in_pot action)
+            11. Place Filter on filter stand (place_filter action)
             12. Pick up Pot from pot stand (pick_pot action)
             13. Pour Coffee (pour_action action)
             14. Put Pot on pot stand (place_pot action)
@@ -56,9 +56,69 @@ class Botrista(Node):
         # start action client for scoop action
         self.action_client_scoop = ActionClient(self, EmptyAction, 'scoop')
 
-        # start action client for pour_action action
-        self.action_client_pour_action = ActionClient(self, PourAction, 'pour_action')
+        # start action client for pick_filter action
+        self.action_client_pick_filter = ActionClient(self, EmptyAction, 'pick_filter')
 
+        # start action client for place_filter action
+        self.action_client_place_filter = ActionClient(self, EmptyAction, 'place_filter')
+
+        # start action client for place_filter_in_pot action
+        self.action_client_place_filter_in_pot = ActionClient(self, EmptyAction, 'place_filter_in_pot')
+
+        # start action client for pick_filter_in_pot action
+        self.action_client_pick_filter_in_pot = ActionClient(self, EmptyAction, 'pick_filter_in_pot')
+
+
+    async def make_coffee_callback(self):
+        #1. Turns on Kettle (action)
+        #2. Pick up Filter from filter stand (pick_filter action)
+        goal2 = EmptyAction.Goal()
+        await self.action_client_pick_filter.send_goal_async(goal2)
+        await goal2.get_result_async()
+
+        #3. Place Filter on Pot (place_filter_in_pot action)
+        goal3 = EmptyAction.Goal()
+        await self.action_client_place_filter_in_pot.send_goal_async(goal3)
+        await goal3.get_result_async()
+
+        #4. Scoop grounds (scoop action)
+        goal4 = EmptyAction.Goal()
+        await self.action_client_scoop.send_goal_async(goal4)
+        await goal4.get_result_async()
+
+        #5. Wait for boiling
+        #6. Pick up Kettle (pick_kettle action)
+        goal6 = EmptyAction.Goal()
+        await self.action_client_pick_kettle.send_goal_async(goal6)
+        await goal4.get_result_async()
+        
+        #7. Pour water from kettle (pour_action action)
+        #8. Place Kettle on kettle stand (place_kettle action)
+        goal8 = EmptyAction.Goal()
+        await self.action_client_place_kettle.send_goal_async(goal8)
+        await goal8.get_result_async()
+
+        #9. Wait for coffee grounds to soak
+        #10. Pick up Filter from Pot (pick_filter_in_pot action)
+        goal10 = EmptyAction.Goal()
+        await self.action_client_pick_filter_in_pot.send_goal_async(goal10)
+        await goal10.get_result_async()
+
+        #11. Place Filter on filter stand (place_filter action)
+        goal11 = EmptyAction.Goal()
+        await self.action_client_place_filter.send_goal_async(goal11)
+        await goal11.get_result_async()
+
+        #12. Pick up Pot from pot stand (pick_pot action)
+        goal12 = EmptyAction.Goal()
+        await self.action_client_pick_pot.send_goal_async(goal12)
+        await goal12.get_result_async()
+
+        #13. Pour Coffee (pour_action action)
+        #14. Put Pot on pot stand (place_pot action)
+        goal14 = EmptyAction.Goal()
+        await self.action_client_pick_filter_in_pot.send_goal_async(goal14)
+        await goal14.get_result_async()
 
 
 
