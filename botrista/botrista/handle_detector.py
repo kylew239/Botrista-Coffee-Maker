@@ -93,11 +93,12 @@ class HandleDetector(Node):
             (self.hue[1], self.saturation[1], self.value[1]))
         yellow_thresh = self.threshold_image(
             cv_img,
-            (4, 93, 84),
-            (64, 255, 255)
+            (27, 59, 70),
+            (72, 255, 255)
         )
-        handle_contour = self.find_handle_contour(handle_thresh)
-        direction_contour = self.find_handle_contour(yellow_thresh)
+        handle_contour, _ = self.find_handle_contour(handle_thresh, 5, 10)
+        direction_contour, clean_direction = self.find_handle_contour(
+            yellow_thresh, 0, 0)
 
         if handle_contour is not None and direction_contour is not None:
             pose = self.contour_to_depth(
@@ -134,15 +135,18 @@ class HandleDetector(Node):
 
     def contour_to_depth(self, contour, image, direction_contour, raw):
 
-        # Get center of the contour
-        M = cv2.moments(contour)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
+        try:
+            # Get center of the contour
+            M = cv2.moments(contour)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
 
-        # Get center of the direction contour
-        M = cv2.moments(direction_contour)
-        dX = int(M["m10"] / M["m00"])
-        dY = int(M["m01"] / M["m00"])
+            # Get center of the direction contour
+            M = cv2.moments(direction_contour)
+            dX = int(M["m10"] / M["m00"])
+            dY = int(M["m01"] / M["m00"])
+        except Exception as e:
+            return None
 
         # create a mask for the contour
         mask = np.zeros_like(image)
@@ -244,7 +248,7 @@ class HandleDetector(Node):
         # angle *= np.sign(np.dot(use_edge, veritcal))
         return angle, use_edge
 
-    def find_handle_contour(self, image):
+    def find_handle_contour(self, image, erode, dilate):
         """
         Find the handle in the thresholded image.
 
@@ -258,8 +262,15 @@ class HandleDetector(Node):
         """
 
         # erode and dilate to remove noise
-        eroded = cv2.erode(image, np.ones((5, 5)))
-        dilate = cv2.dilate(eroded, np.ones((10, 10)))
+        if erode > 0:
+            eroded = cv2.erode(image, np.ones((erode, erode)))
+        else:
+            eroded = image
+
+        if dilate > 0:
+            dilate = cv2.dilate(eroded, np.ones((dilate, dilate)))
+        else:
+            dilate = eroded
         clean_image = dilate
 
         # find contours
@@ -271,10 +282,10 @@ class HandleDetector(Node):
 
         # no contours found
         if len(contours) == 0:
-            return None
+            return None, None
 
         largest = max(contours, key=lambda cnt: cv2.contourArea(cnt))
-        return largest
+        return largest, clean_image
 
     def threshold_image(self, image, low, upper):
         """

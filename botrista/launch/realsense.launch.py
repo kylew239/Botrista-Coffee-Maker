@@ -76,12 +76,13 @@ def generate_launch_description():
                 'spatial_filter.enable': 'true',
                 'temporal_filter.enable': 'true',
                 'decimation_filter.enable': 'true',
+                'depth_module.enable_auto_exposure': 'false',
+                'depth_module.exposure': '30000'
                 # 'json_file_path': PathJoinSubstitution([
                 #     FindPackageShare("botrista"),
                 #     "config",
                 #     "d405_config.json"
                 # ]),
-                'depth_module.enable_auto_exposure': 'true',
             }.items(),
         ),
         IncludeLaunchDescription(

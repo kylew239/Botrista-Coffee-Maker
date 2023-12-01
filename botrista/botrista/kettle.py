@@ -63,7 +63,7 @@ class Kettle(Node):
         """
         try:
             tf = self.buffer.lookup_transform(
-                "panda_link0", "filtered_kettle_tag", Time())
+                "panda_link0", "filtered_pour_over_tag", Time())
 
         except Exception as e:
             return response

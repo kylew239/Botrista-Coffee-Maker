@@ -28,7 +28,7 @@ class CameraLocalizer(Node):
 
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.tags = ['camera_localizer_tag', 'kettle_tag',
-                     'filter_tag', 'pour_over_tag']
+                     'filter_tag', 'pour_over_tag', 'coffee_grounds', 'coffee_scoop']
 
         self.filters = [FilterTag(self.transform_broadcaster,
                                   self.buffer,
