@@ -38,7 +38,7 @@ class CoffeeGrounds(Node):
         """
         super().__init__('coffee_grounds')
 
-        # define refinement, approach, grasp, and retreat positions (relative to april tag)
+        # define observation position (relative to april tag)
         self.scoop_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
         self.filter_handle_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
@@ -70,7 +70,19 @@ class CoffeeGrounds(Node):
         self.filter_center_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
         self.dump_position_retreat = Point(x=0.5, y=0.5, z=0.2)
 
-        # define orientations
+        # define observation position (relative to april tag)
+        self.scoop_offset_orient_observe = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.grounds_offset_orient_observe = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_handle_offset_orient_observe = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_center_offset_orient_observe = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_dump_orient_observe = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+
+        # define refinement, approach, grasp, and retreat orientations (relative to handle)
         self.scoop_offset_orient = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
         
@@ -157,12 +169,22 @@ class CoffeeGrounds(Node):
             Function to pick up the coffee scoop
         """
         goal = GraspProcess.Goal()
-        goal.observe_pose = self.
-        goal.refinement_pose = 
-        goal.approach_pose = 
-        goal.grasp_pose = 
-        goal.retreat_pose = 
-
+        goal.observe_pose = Pose(
+            position=self.scoop_offset_pos_observe,
+            orientation=self.scoop_offset_orient_observe)
+        goal.refinement_pose = Pose(
+            position=self.scoop_offset_pos_refine,
+            orientation=self.scoop_offset_orient)
+        goal.approach_pose = Pose(
+            position=self.scoop_offset_pos_refine,
+            orientation=Quaternion())
+        goal.grasp_pose = Pose(
+            position=self.scoop_offset_pos_refine,
+            orientation=Quaternion())
+        goal.retreat_pose = Pose(
+            position=self.scoop_offset_pos_refine,
+            orientation=Quaternion()
+)
         self._action_client.wait_for_server()
 
         return self._action_client.send_goal_async(goal)
