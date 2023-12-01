@@ -16,9 +16,41 @@ from rclpy.action import ActionServer, ActionClient
 
 
 class Botrista(Node):
-
+    """
+    Description:
+        Waits to detect a cup placed in the detection area, then runs following routine:
+            1. Turns on Kettle (action)
+            2. Pick up Filter from filter stand (action)
+            3. Place Filter on Pot (action)
+            4. Scoop grounds (action)
+            5. Wait for boiling
+            6. Pick up Kettle (pick_kettle action)
+            7. Pour water from kettle (pour_action action)
+            8. Place Kettle on kettle stand (place_kettle action)
+            9. Wait for coffee grounds to soak
+            10. Pick up Filter from Pot (action)
+            11. Place Filter on filter stand (action)
+            12. Pick up Pot from pot stand (pick_pot action)
+            13. Pour Coffee (pour_action action)
+            14. Put Pot on pot stand (place_pot action)
+    """
     def __init__(self):
         super().__init__("botrista")
+        
+        # start action client for pick_kettle action
+        self.action_client_pick_kettle = ActionClient(self, EmptyAction, 'pick_kettle')
+        
+        # start action client for place_kettle action
+        self.action_client_place_kettle = ActionClient(self, EmptyAction, 'place_kettle')
+        
+        # start action client for pick_pot action
+        self.action_client_pick_pot = ActionClient(self, EmptyAction, 'pick_pot')
+        
+        # start action client for place_pot action
+        self.action_client_place_pot = ActionClient(self, EmptyAction, 'place_pot')
+
+        # start action client for place_pot action
+        self.action_client_pour_action = ActionClient(self, PourAction, 'pour_action')
 
 
 

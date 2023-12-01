@@ -137,13 +137,7 @@ class CoffeeGrounds(Node):
             self,
             GroundsAction,
             'scoop',
-            self.fill_coffee_maker)
-        # start action server for dumping coffee grounds routine
-        self.dump_action_server = ActionServer(
-            self,
-            GroundsAction,
-            'dump',
-            self.dump_coffee_filter)
+            self.scoop_coffee_grounds)
         
         # start action client for grasp process action
         self.action_client = ActionClient(self, GraspProcess, 'grasp_process')
@@ -187,7 +181,7 @@ class CoffeeGrounds(Node):
                                 "panda")
 
 
-    def fill_coffee_maker(self, goal_handle):
+    def scoop_coffee_grounds(self, goal_handle):
         """
         Description:
             Action callback for the scooping routine, scoops coffee and dumps it in the filter
