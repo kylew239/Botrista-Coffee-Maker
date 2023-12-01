@@ -5,6 +5,7 @@ from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 import tf2_geometry_msgs
+from franka_msgs.msg import GraspEpsilon
 from geometry_msgs.msg import (
     Pose,
     Point,
@@ -40,52 +41,81 @@ class CoffeeGrounds(Node):
         """
         super().__init__('coffee_grounds')
 
-        # define observation position (relative to april tag)
-        self.scoop_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos_observe = Point(x=0.5, y=0.5, z=0.2)
+        # define observation poses (relative to april tag)
+        self.scoop_offset_pose_observe = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+            )
+        self.filter_center_offset_pose_observe = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+            )
+        self.filter_dump_pose_observe = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+            )
 
-        # define refinement, approach, grasp, and retreat positions (relative to handle)
-        self.scoop_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos_refine = Point(x=0.5, y=0.5, z=0.2)
-
-        self.scoop_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos_approach = Point(x=0.5, y=0.5, z=0.2)
-
-        self.scoop_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos_grasp = Point(x=0.5, y=0.5, z=0.2)
-
-        self.scoop_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
-        self.dump_position_retreat = Point(x=0.5, y=0.5, z=0.2)
-
-        # Initialize actual pickup positions
-        self.scoop_actual_pickup_pose = Pose()        
-
-        # define observation position (relative to april tag)
-        self.scoop_offset_orient_observe = Quaternion(
+        # define refinement, approach, grasp, and retreat poses (relative to handle)
+        self.scoop_offset_pose_refine = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_handle_offset_orient_observe = Quaternion(
+            )
+        self.filter_center_offset_pose_refine = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient_observe = Quaternion(
+            )
+        self.filter_dump_pose_refine = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_dump_orient_observe = Quaternion(
+            )
+        self.scoop_offset_pose_approach = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-
-        # define refinement, approach, grasp, and retreat orientations (relative to handle)
-        self.scoop_offset_orient = Quaternion(
+            )
+        self.filter_center_offset_pose_approach = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient_upright = Quaternion(
+            )
+        self.filter_dump_pose_approach = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient_flipped = Quaternion(
+            )
+        self.scoop_offset_pose_grasp = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.dump_orientation_upright = Quaternion(
+            )
+        self.filter_center_offset_pose_grasp = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.dump_orientation_dump = Quaternion(
+            )
+        self.filter_dump_pose_grasp = Pose(
+            position=Point(
+                x=0.1, y=0.0, z=0.2),
+            orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
+            )   
 
         # define scooping poses (relative to coffee ground april tag)
         self.scoop_pose_measure = Pose(
@@ -125,6 +155,9 @@ class CoffeeGrounds(Node):
                 x=0.1, y=0.0, z=0.2),
             orientation=Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0))
+ 
+        # Initialize actual pickup positions
+        self.scoop_actual_pickup_pose = Pose()    
 
         # define grasp commands
         self.grasp_command_scoop = Grasp.Goal(
@@ -207,30 +240,34 @@ class CoffeeGrounds(Node):
         Description:
             Function to pick up the coffee scoop
         """
-        goal = GraspProcess.Goal()
-        goal.observe_pose = Pose(
-            position=self.scoop_offset_pos_observe,
-            orientation=self.scoop_offset_orient_observe)
-        goal.refinement_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=self.scoop_offset_orient)
-        goal.approach_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=Quaternion())
-        goal.grasp_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=Quaternion())
-        goal.gripper_command = self.grasp_command_scoop
-        goal.retreat_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=Quaternion()
-)
-        self.action_client.wait_for_server()
-        result = self.action_client.send_goal_async(goal)
+        try:
+            tf = self.buffer.lookup_transform(
+                "panda_link0", "filtered_coffee_scoop", Time())
 
-        self.scoop_actual_pickup_pose = result
+        except Exception as e:
+            self.get_logger().error("No transform found")
+            return
+        
+        observe_pose = tf2_geometry_msgs.do_transform_pose(
+            self.scoop_offset_pose_observe, tf)
 
-        return result
+        goal_msg = GraspProcess.Goal(
+            observe_pose=observe_pose,
+            refinement_pose=self.scoop_offset_pose_refine,
+            approach_pose=self.scoop_offset_pose_approach,
+            grasp_pose=self.scoop_offset_pose_grasp,
+            width=0.03,
+            force=50.0,
+            speed=0.05,
+            epsilon=GraspEpsilon(inner=0.01, outer=0.01),
+            retreat_pose=self.retreat_pose
+        )
+
+        self.get_logger().warn("MADE GRASP PROCESS GOAL")
+
+        goal = await self.grasp_process.send_goal_async(goal_msg)
+        res = await goal.get_result_async()
+        self.scoop_actual_pickup_pose = res.result.actual_grasp_pose
 
 
     async def scoop_grounds(self):
@@ -298,28 +335,37 @@ class CoffeeGrounds(Node):
 
 
     async def return_scoop(self):
-        goal = GraspProcess.Goal()
-        goal.observe_pose = Pose(
-            position=self.scoop_offset_pos_observe,
-            orientation=self.scoop_offset_orient_observe)
-        goal.refinement_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=self.scoop_offset_orient)
-        goal.approach_pose = Pose(
-            position=self.scoop_offset_pos_refine,
-            orientation=Quaternion())
-        goal.grasp_pose = self.scoop_actual_pickup_pose
-        goal.gripper_command = self.grasp_command_open
-        goal.retreat_pose = Pose(
-            position=self.scoop_offset_pos_refine,
+        approach_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=-0.1),
             orientation=Quaternion()
-)
-        self.action_client.wait_for_server()
-        result = self.action_client.send_goal_async(goal)
+        )
 
-        self.scoop_actual_pickup_pose = result
+        grasp_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=-0.04),
+            orientation=Quaternion()
+        )
 
-        return result
+        retreat_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=-0.1),
+            orientation=Quaternion()
+        )
+
+        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, self.scoop_actual_pickup_pose)
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, self.scoop_actual_pickup_pose)
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, self.scoop_actual_pickup_pose)
+
+        grasp_plan = GraspPlan(
+            approach_pose=approach_pose,
+            grasp_pose=grasp_pose,
+            grasp_command=Grasp.Goal(
+                width=0.04,  # open the gripper wider to release the kettle
+                force=50.0,
+                speed=0.2,
+            ),
+            retreat_pose=approach_pose,
+        )
+
+        await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
 
     async def flip_shake_filter(self):
