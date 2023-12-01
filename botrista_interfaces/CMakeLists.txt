@@ -11,12 +11,14 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(franka_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
      "action/PourAction.action" # Whatever message file you've defined
+     "action/GraspProcess.action"
      "action/EmptyAction.action"
-     DEPENDENCIES geometry_msgs
+     DEPENDENCIES geometry_msgs franka_msgs
      )
 
 if(BUILD_TESTING)

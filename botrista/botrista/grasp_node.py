@@ -1,13 +1,16 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, TransformStamped, Transform
-from std_msgs.msg import Empty
+from std_srvs.srv import Empty
 import tf2_geometry_msgs
+from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 from franka_msgs.action import Grasp
 from rclpy.time import Time
 from botrista_interfaces.action import GraspProcess
 from rclpy.action import ActionServer, ActionClient
+from moveit_wrapper.moveitapi import MoveItApi
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 
 class GraspNode(Node):
@@ -25,22 +28,40 @@ class GraspNode(Node):
             self,
             GraspProcess,
             'grasp_process',
-            self.grasp_process)
+            self.grasp_process,
+            callback_group=ReentrantCallbackGroup())
+        
+        self.buffer = Buffer()
+        self.listener = TransformListener(self.buffer, self)
 
+        self.moveit_api = MoveItApi(
+            self, "panda_link0", "panda_hand_tcp", "panda_manipulator", "/franka/joint_states")
+
+        self.delay_client = self.create_client(
+            Empty, "delay", callback_group=ReentrantCallbackGroup()
+        )
+        self.grasp_planner = GraspPlanner(
+            self.moveit_api, "panda_gripper/grasp")
 
     async def grasp_process(self, goal_handle):
         """
         Grabs a specified object.
         """
+        self.get_logger().warn("GRASP PROCESS")
+
         observe_pose = goal_handle.request.observe_pose
         refinement_offset = goal_handle.request.refinement_pose
         approach_offset = goal_handle.request.approach_pose
         grasp_offset = goal_handle.request.grasp_pose
         retreat_offset = goal_handle.request.retreat_pose
-        gripper_command = goal_handle.request.gripper_command
-
+        gripper_command = Grasp.Goal(
+            width=goal_handle.request.width,
+            force=goal_handle.request.force,
+            speed=goal_handle.request.speed,
+            epsilon=goal_handle.request.epsilon
+        )
         # move to observe point
-        await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
+        await self.moveit_api.plan_async(point=observe_pose.position, orientation=observe_pose.orientation, execute=True)
         await self.delay_client.call_async(Empty.Request())
 
         # get the handle tf
@@ -53,6 +74,7 @@ class GraspNode(Node):
             refinement_offset, handle_tf)
 
         self.get_logger().warn(f"REFINEMNENT POINT: {refinement_point}")
+
         await self.moveit_api.plan_async(point=refinement_point.position, orientation=refinement_point.orientation, execute=True)
         await self.delay_client.call_async(Empty.Request())
         handle_tf = self.buffer.lookup_transform(
@@ -77,4 +99,12 @@ class GraspNode(Node):
 
         result = GraspProcess.Result()
         result.actual_grasp_pose = actual_grasp_pose
+        self.get_logger().warn(f"finished grasp: {result}")
+        goal_handle.succeed()
         return result
+
+def main(args=None):
+    rclpy.init(args=args)
+    gn = GraspNode()
+    rclpy.spin(gn)
+    rclpy.shutdown()
