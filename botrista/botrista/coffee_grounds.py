@@ -3,22 +3,17 @@ import rclpy
 import numpy as np
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.moveitapi import MoveItApi
-from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
+from moveit_wrapper.grasp_planner import GraspPlan
 import tf2_geometry_msgs
 from franka_msgs.msg import GraspEpsilon
 from geometry_msgs.msg import (
     Pose,
     Point,
     Quaternion,
-    Vector3,
-    TransformStamped,
-    Transform
 )
-from franka_msgs.action import (
-    Grasp,
-)
+from franka_msgs.action import Grasp
 from rclpy.action import ActionServer, ActionClient
-from tf2_ros import TransformListener, Buffer, TransformBroadcaster
+from tf2_ros import TransformListener, Buffer
 from botrista_interfaces.action import GroundsAction
 from botrista_interfaces.action import GraspProcess
 from rclpy.time import Time
@@ -221,15 +216,15 @@ class CoffeeGrounds(Node):
         """
         result = GroundsAction()
         result.status = 0
-        self.measure_coffee_height()
+        #self.measure_coffee_height()
         result.status = 1
         self.grab_scoop()
         result.status = 2
-        self.scoop_grounds()
+        #self.scoop_grounds()
         result.status = 3
-        self.dump_grounds()
+        #self.dump_grounds()
         result.status = 4
-        self.return_scoop()
+        #self.return_scoop()
         result.status = 5
         result.complete = True
         return result
