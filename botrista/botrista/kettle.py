@@ -1,17 +1,14 @@
 import rclpy
 from rclpy.node import Node
 import tf2_geometry_msgs
-from tf2_ros import Buffer, TransformListener, TransformBroadcaster, StaticTransformBroadcaster
+from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
-from std_msgs.msg import Header
-from geometry_msgs.msg import Pose, Point, Quaternion, PointStamped
-from control_msgs.msg import GripperCommand
+from geometry_msgs.msg import Pose, Point, Quaternion
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
-from rclpy.callback_groups import ReentrantCallbackGroup
 from time import sleep
 from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction
@@ -30,12 +27,6 @@ class Kettle(Node):
             self, "panda_link0", "panda_hand_tcp", "panda_manipulator", "/franka/joint_states")
         self.grasp_planner = GraspPlanner(
             self.moveit_api, "panda_gripper/grasp")
-
-        self.grab_srv = self.create_service(
-            Empty, "grab", self.grab, callback_group=ReentrantCallbackGroup())
-
-        self.release_srv = self.create_service(
-            Empty, "place", self.place, callback_group=ReentrantCallbackGroup())
 
         self.delay_client = self.create_client(
             Empty, "delay", callback_group=ReentrantCallbackGroup()
