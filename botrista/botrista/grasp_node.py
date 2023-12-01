@@ -28,7 +28,6 @@ class GraspNode(Node):
             self.grasp_process)
 
 
-
     async def grasp_process(self, goal_handle):
         """
         Grabs a specified object.
