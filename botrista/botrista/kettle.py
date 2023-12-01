@@ -21,7 +21,7 @@ class Kettle(Node):
 
     def __init__(self):
         super().__init__("kettle")
-        
+
         self.kettle_actual_place = TransformStamped()
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
@@ -71,7 +71,7 @@ class Kettle(Node):
         """
         Grabs the kettle from its stand.
         """
-        #### TFs
+        # TFs
         # pour_over_tag
         try:
             tf = self.buffer.lookup_transform(
@@ -80,7 +80,7 @@ class Kettle(Node):
         except Exception as e:
             self.get_logger().error("No transform found")
             return
-        
+
         observe_pose = tf2_geometry_msgs.do_transform_pose(
             self.observe_pose, tf)
 
@@ -105,7 +105,7 @@ class Kettle(Node):
         goal = await self.grasp_process.send_goal_async(goal_msg)
         res = await goal.get_result_async()
         self.kettle_actual_place = res.result.actual_grasp_pose
-        
+
         goal_handle.succeed()
         return EmptyAction.Result()
         # try:
@@ -144,7 +144,6 @@ class Kettle(Node):
         # retreat_pose = tf2_geometry_msgs.do_transform_pose(
         #     self.retreat_pose, handle_tf)
 
-
         # grasp_plan = GraspPlan(
         #     approach_pose=approach_pose,
         #     grasp_pose=grasp_pose,
@@ -181,7 +180,7 @@ class Kettle(Node):
         # # grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
         # retreat_pose = tf2_geometry_msgs.do_transform_pose(
         #     self.approach_pose, tf)
-        
+
         approach_pose = Pose(
             position=Point(x=0.0, y=0.0, z=-0.1),
             orientation=Quaternion()
@@ -197,11 +196,12 @@ class Kettle(Node):
             orientation=Quaternion()
         )
 
-
-        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, self.kettle_actual_place)
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, self.kettle_actual_place)
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, self.kettle_actual_place)
-
+        approach_pose = tf2_geometry_msgs.do_transform_pose(
+            approach_pose, self.kettle_actual_place)
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(
+            grasp_pose, self.kettle_actual_place)
+        retreat_pose = tf2_geometry_msgs.do_transform_pose(
+            retreat_pose, self.kettle_actual_place)
 
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
@@ -218,6 +218,7 @@ class Kettle(Node):
 
         goal_handle.succeed()
         return EmptyAction.Result()
+
 
 def kettle_entry(args=None):
     rclpy.init(args=args)

@@ -75,7 +75,11 @@ def generate_launch_description():
         Node(
             package="botrista",
             executable="grasp_node"
-        )
+        ),
+        Node(
+            package="botrista",
+            executable="pot_node"
+        ),
         # Node(
         #     package="botrista",
         #     executable="cup_detection",
