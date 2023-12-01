@@ -15,7 +15,7 @@ find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
      "action/PourAction.action" # Whatever message file you've defined
-     "action/Empty.action"
+     "action/EmptyAction.action"
      DEPENDENCIES geometry_msgs
      )
 

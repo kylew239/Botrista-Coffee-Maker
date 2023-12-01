@@ -14,14 +14,16 @@ from rclpy.time import Time
 from rclpy.callback_groups import ReentrantCallbackGroup
 from time import sleep
 from franka_msgs.msg import GraspEpsilon
+from botrista_interfaces.action import EmptyAction
+from rclpy.action import ActionServer
 
 
 class Kettle(Node):
 
     def __init__(self):
         super().__init__("kettle")
-        pass
-
+        
+        self.kettle_place_pose = Pose()
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
         self.moveit_api = MoveItApi(
@@ -38,6 +40,17 @@ class Kettle(Node):
         self.delay_client = self.create_client(
             Empty, "delay", callback_group=ReentrantCallbackGroup()
         )
+        self.pick_kettle_client = ActionServer(self,
+                                               EmptyAction,
+                                               "pick_kettle",
+                                               self.pick_kettle_cb,
+                                               callback_group=ReentrantCallbackGroup())
+        self.place_kettle_client = ActionServer(self,
+                                                EmptyAction,
+                                                "place_kettle",
+                                                self.place_kettle_cb,
+                                                callback_group=ReentrantCallbackGroup())
+
         while not self.delay_client.wait_for_service(timeout_sec=2.0):
             self.get_logger().warn("Waiting for delay service")
 
@@ -57,7 +70,7 @@ class Kettle(Node):
             position=Point(x=0.0, y=0.0, z=-0.10),
             orientation=Quaternion())
 
-    async def grab(self, request, response):
+    async def pick_kettle_cb(self, goal_handle):
         """
         Grabs the kettle from its stand.
         """
@@ -66,7 +79,8 @@ class Kettle(Node):
                 "panda_link0", "filtered_pour_over_tag", Time())
 
         except Exception as e:
-            return response
+            self.get_logger().error("No transform found")
+            return
 
         # go to the observe pose
         observe_pose = tf2_geometry_msgs.do_transform_pose(
@@ -96,6 +110,9 @@ class Kettle(Node):
         retreat_pose = tf2_geometry_msgs.do_transform_pose(
             self.retreat_pose, handle_tf)
 
+        # Store the grasping pose for placing
+        self.kettle_place_pose = grasp_pose
+
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
             grasp_pose=grasp_pose,
@@ -110,9 +127,7 @@ class Kettle(Node):
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
-        return response
-
-    async def place(self, request, response):
+    async def place_kettle_cb(self, goal_handle):
         """
         Places the kettle on its stand.
         """
@@ -130,13 +145,14 @@ class Kettle(Node):
                 z=0.18),
             orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
         )
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
+        # Using stored grasp pose instead of calculated one
+        # grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
         retreat_pose = tf2_geometry_msgs.do_transform_pose(
             self.approach_pose, tf)
 
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
-            grasp_pose=grasp_pose,
+            grasp_pose=self.kettle_place_pose,
             grasp_command=Grasp.Goal(
                 width=0.04,  # open the gripper wider to release the kettle
                 force=50.0,
@@ -146,8 +162,6 @@ class Kettle(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-
-        return response
 
 
 def kettle_entry(args=None):
