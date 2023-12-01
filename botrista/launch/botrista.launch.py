@@ -58,7 +58,7 @@ def generate_launch_description():
         ),
         Node(
             package="botrista",
-            executable="filter_grasp"
+            executable="pick_filter"
         ),
         Node(
             package="botrista",
