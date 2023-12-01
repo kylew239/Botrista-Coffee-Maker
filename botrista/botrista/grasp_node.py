@@ -69,10 +69,9 @@ class GraspNode(Node):
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
             grasp_pose=grasp_pose,
-            grasp_command=gripper_command
-            ),
             retreat_pose=retreat_pose,
-        )
+            grasp_command=gripper_command
+            )
 
         actual_grasp_pose = await self.grasp_planner.execute_grasp_plan(grasp_plan)
 

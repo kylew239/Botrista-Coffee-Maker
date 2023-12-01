@@ -38,24 +38,31 @@ class CoffeeGrounds(Node):
         """
         super().__init__('coffee_grounds')
 
-        # define refinement, approach, grasp, and retreat positions
+        # define refinement, approach, grasp, and retreat positions (relative to april tag)
+        self.scoop_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
+        self.grounds_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_handle_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_center_offset_pos_observe = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_dump_pos_observe = Point(x=0.5, y=0.5, z=0.2)
+
+        # define refinement, approach, grasp, and retreat positions (relative to handle)
         self.scoop_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
         self.filter_handle_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
         self.filter_center_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
         self.filter_dump_pos_refine = Point(x=0.5, y=0.5, z=0.2)
 
-        self.scoop_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.grounds_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_handle_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos_grasp = Point(x=0.5, y=0.5, z=0.2)
-
         self.scoop_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
         self.filter_handle_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
         self.filter_center_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
         self.filter_dump_pos_approach = Point(x=0.5, y=0.5, z=0.2)
+
+        self.scoop_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.grounds_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_handle_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_center_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_dump_pos_grasp = Point(x=0.5, y=0.5, z=0.2)
 
         self.scoop_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
@@ -144,29 +151,13 @@ class CoffeeGrounds(Node):
         result.complete = True
         return result
 
-    def dump_coffee_filter(self, goal_handle):
-        """
-        Description:
-            Action callback for the dumping grounds routine, dumps coffee grounds from filter into trash
-        """
-        result = GroundsAction()
-        result.status = 0
-        self.grab_filter()
-        result.status = 1
-        self.flip_shake_filter()
-        result.status = 2
-        self.place_filter()
-        result.status = 3
-        result.complete = True
-        return result
-
     async def grab_scoop(self):
         """
         Description:
             Function to pick up the coffee scoop
         """
         goal = GraspProcess.Goal()
-        goal.observe_pose = 
+        goal.observe_pose = self.
         goal.refinement_pose = 
         goal.approach_pose = 
         goal.grasp_pose = 
