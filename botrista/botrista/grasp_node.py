@@ -43,11 +43,11 @@ class GraspNode(Node):
         """
         Grabs a specified object.
         """
-        observe_pose = goal_handle.request.
-        refinement_offset = 
-        approach_offset = 
-        grasp_offset = 
-        retreat_offset = 
+        observe_pose = goal_handle.request.observe_pose
+        refinement_offset = goal_handle.request.refinement_pose
+        approach_offset = goal_handle.request.approach_pose
+        grasp_offset = goal_handle.request.grasp_pose
+        retreat_offset = goal_handle.request.retreat_pose
 
         # move to observe point
         await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
@@ -88,6 +88,8 @@ class GraspNode(Node):
             retreat_pose=retreat_pose,
         )
 
-        await self.grasp_planner.execute_grasp_plan(grasp_plan)
+        actual_grasp_pose = await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
-        return response
+        result = GraspProcess.Result()
+        result.actual_grasp_pose = actual_grasp_pose
+        return result
