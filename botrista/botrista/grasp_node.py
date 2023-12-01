@@ -1,22 +1,10 @@
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, TransformStamped, Transform
 import tf2_geometry_msgs
-from image_geometry.cameramodels import PinholeCameraModel
-from scipy.ndimage import median_filter
-from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 from franka_msgs.action import Grasp
-import cv_bridge
-import cv2
-import numpy as np
-import scipy.stats as ss
-import pyrealsense2
-from tf2_ros.transform_broadcaster import TransformBroadcaster
-from tf2_ros.transform_listener import TransformListener, Buffer
 from rclpy.time import Time
-from std_msgs.msg import Header
 from botrista_interfaces.action import GraspProcess
 from rclpy.action import ActionServer, ActionClient
 
@@ -31,7 +19,8 @@ class GraspNode(Node):
 
     def __init__(self):
         super().__init__('GraspNode')
-        self._action_server = ActionServer(
+
+        self.grasp_process_action_server = ActionServer(
             self,
             GraspProcess,
             'grasp_process',
@@ -48,6 +37,7 @@ class GraspNode(Node):
         approach_offset = goal_handle.request.approach_pose
         grasp_offset = goal_handle.request.grasp_pose
         retreat_offset = goal_handle.request.retreat_pose
+        gripper_command = goal_handle.request.gripper_command
 
         # move to observe point
         await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
@@ -79,11 +69,7 @@ class GraspNode(Node):
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
             grasp_pose=grasp_pose,
-            grasp_command=Grasp.Goal(
-                width=0.03,
-                force=50.0,
-                speed=0.05,
-                epsilon=GraspEpsilon(inner=0.01, outer=0.01)
+            grasp_command=gripper_command
             ),
             retreat_pose=retreat_pose,
         )

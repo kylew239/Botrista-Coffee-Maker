@@ -21,6 +21,7 @@ from std_msgs.msg import Header
 from rclpy.duration import Duration
 from tf2_ros import TransformListener, Buffer, TransformBroadcaster
 from botrista_interfaces.action import GroundsAction
+from botrista_interfaces.action import GraspProcess
 from rclpy.time import Time
 
 
@@ -35,13 +36,20 @@ class CoffeeGrounds(Node):
         Description:
             Initializes the CoffeeGrounds node
         """
-        # define approach, grasp, and retreat positions
         super().__init__('coffee_grounds')
-        self.scoop_offset_pos = Point(x=0.1, y=0.0, z=0.2)
-        self.grounds_offset_pos = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_handle_offset_pos = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_center_offset_pos = Point(x=0.1, y=0.0, z=0.2)
-        self.filter_dump_pos = Point(x=0.5, y=0.5, z=0.2)
+
+        # define refinement, approach, grasp, and retreat positions
+        self.scoop_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
+        self.grounds_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_handle_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_center_offset_pos_refine = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_dump_pos_refine = Point(x=0.5, y=0.5, z=0.2)
+
+        self.scoop_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.grounds_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_handle_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_center_offset_pos_grasp = Point(x=0.1, y=0.0, z=0.2)
+        self.filter_dump_pos_grasp = Point(x=0.5, y=0.5, z=0.2)
 
         self.scoop_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos_approach = Point(x=0.1, y=0.0, z=0.2)
@@ -56,20 +64,28 @@ class CoffeeGrounds(Node):
         self.dump_position_retreat = Point(x=0.5, y=0.5, z=0.2)
 
         # define orientations
-        self.scoop_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.scoop_offset_orient = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        
         self.grounds_offset_orient_approach = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.grounds_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.grounds_offset_orient = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
         self.grounds_offset_orient_retreat = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
+            
         self.filter_handle_offset_orient = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
+        
         self.filter_center_offset_orient_upright = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
         self.filter_center_offset_orient_flipped = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
-        self.dump_orientation_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.dump_orientation_dump = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        
+        self.dump_orientation_upright = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.dump_orientation_dump = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
 
         # define grasp commands
         self.grasp_command_scoop = Grasp.Goal(
@@ -91,6 +107,9 @@ class CoffeeGrounds(Node):
             GroundsAction,
             'dump',
             self.dump_coffee_filter)
+        
+        # start action client for grasp process action
+        self._action_client = ActionClient(self, GraspProcess, 'grasp_process')
 
         # Create tf listener
         self.tf_buffer = Buffer()
@@ -146,35 +165,16 @@ class CoffeeGrounds(Node):
         Description:
             Function to pick up the coffee scoop
         """
-        tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered_scoop_tag", Time())
+        goal = GraspProcess.Goal()
+        goal.observe_pose = 
+        goal.refinement_pose = 
+        goal.approach_pose = 
+        goal.grasp_pose = 
+        goal.retreat_pose = 
 
-        approach_pose = Pose(
-            position=self.scoop_offset_pos_approach,
-            orientation=self.scoop_offset_orient
-        )
-        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
+        self._action_client.wait_for_server()
 
-        grasp_pose = Pose(
-            position=self.scoop_offset_pos,
-            orientation=self.scoop_offset_orient
-        )
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
-
-        retreat_pose = Pose(
-            position=self.scoop_offset_pos_retreat,
-            orientation=self.scoop_offset_orient
-        )
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
-
-        grasp_plan = GraspPlan(
-            approach_pose=approach_pose,
-            grasp_pose=grasp_pose,
-            grasp_command=self.grasp_command_scoop,
-            retreat_pose=retreat_pose,
-        )
-
-        await self.grasp_planner.execute_grasp_plan(grasp_plan)
+        return self._action_client.send_goal_async(goal)
 
     async def scoop_grounds(self):
         tf = self.buffer.lookup_transform(
