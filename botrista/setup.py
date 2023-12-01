@@ -36,6 +36,7 @@ setup(
             'grasp_node = botrista.grasp_node:main',
             'pot_node = botrista.pot:pot_entry',
             'coffee_ground_node = botrista.coffee_grounds:coffee_grounds_entry',
+            'run_botrista = botrista.run_botrista:botrista_entry',
         ],
     },
 )
