@@ -173,34 +173,37 @@ class Kettle(Node):
         """
         Places the kettle on its stand.
         """
-        tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered_kettle_tag", Time())
+        # tf = self.buffer.lookup_transform(
+        #     "panda_link0", "filtered_kettle_tag", Time())
 
-        # play the grasp plan backwards to place the kettle
-        approach_pose = tf2_geometry_msgs.do_transform_pose(
-            self.retreat_pose, tf)
+        # # play the grasp plan backwards to place the kettle
+        # approach_pose = tf2_geometry_msgs.do_transform_pose(
+        #     self.retreat_pose, tf)
 
-        hover_pose = Pose(
-            position=Point(
-                x=0.09,
-                y=0.043,
-                z=0.18),
-            orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
-        )
-        # Using stored grasp pose instead of calculated one
-        # grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(
-            self.approach_pose, tf)
+        # hover_pose = Pose(
+        #     position=Point(
+        #         x=0.09,
+        #         y=0.043,
+        #         z=0.18),
+        #     orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
+        # )
+        # # Using stored grasp pose instead of calculated one
+        # # grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
+        # retreat_pose = tf2_geometry_msgs.do_transform_pose(
+        #     self.approach_pose, tf)
+        
+        approach_pose = self.kettle_actual_place
+        approach_pose.position.z += 0.10
 
         grasp_plan = GraspPlan(
             approach_pose=approach_pose,
-            grasp_pose=self.kettle_place_pose,
+            grasp_pose=self.kettle_actual_place,
             grasp_command=Grasp.Goal(
                 width=0.04,  # open the gripper wider to release the kettle
                 force=50.0,
                 speed=0.2,
             ),
-            retreat_pose=retreat_pose,
+            retreat_pose=approach_pose,
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
