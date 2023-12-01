@@ -14,7 +14,7 @@ from geometry_msgs.msg import (
 from franka_msgs.action import Grasp
 from rclpy.action import ActionServer, ActionClient
 from tf2_ros import TransformListener, Buffer
-from botrista_interfaces.action import GroundsAction
+from botrista_interfaces.action import EmptyAction
 from botrista_interfaces.action import GraspProcess
 from rclpy.time import Time
 from sensor_msgs.msg import Image, CameraInfo
@@ -169,7 +169,7 @@ class CoffeeGrounds(Node):
         # start action server for scooping routine
         self.scoop_action_server = ActionServer(
             self,
-            GroundsAction,
+            EmptyAction,
             'scoop',
             self.scoop_coffee_grounds)
 
