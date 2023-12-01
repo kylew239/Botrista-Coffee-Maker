@@ -23,11 +23,13 @@ from tf2_ros import TransformListener, Buffer, TransformBroadcaster
 from botrista_interfaces.action import GroundsAction
 from rclpy.time import Time
 
+
 class CoffeeGrounds(Node):
     """
     Measures coffee depth, scoops coffee, and dumps coffee in coffee maker.
     Also dumps used coffee grounds from filter.
     """
+
     def __init__(self):
         super().__init__('coffee_grounds')
         self.scoop_offset_pos = Point(x=0.1, y=0.0, z=0.2)
@@ -49,18 +51,26 @@ class CoffeeGrounds(Node):
         self.dump_position_retreat = Point(x=0.5, y=0.5, z=0.2)
 
         self.scoop_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.grounds_offset_orient_approach = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.grounds_offset_orient_approach = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
         self.grounds_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.grounds_offset_orient_retreat = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_handle_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        self.filter_center_offset_orient_flipped = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        self.grounds_offset_orient_retreat = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_handle_offset_orient = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_center_offset_orient_upright = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
+        self.filter_center_offset_orient_flipped = Quaternion(
+            x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation_dump = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
 
-        self.grasp_command_scoop=Grasp.Goal(width=0.02, force=50.0, speed=0.05)
-        self.grasp_command_filter=Grasp.Goal(width=0.02, force=50.0, speed=0.05)
-        self.grasp_command_open=Grasp.Goal(width=0.02, force=50.0, speed=0.05)
+        self.grasp_command_scoop = Grasp.Goal(
+            width=0.02, force=50.0, speed=0.05)
+        self.grasp_command_filter = Grasp.Goal(
+            width=0.02, force=50.0, speed=0.05)
+        self.grasp_command_open = Grasp.Goal(
+            width=0.02, force=50.0, speed=0.05)
 
         self.scoop_action_server = ActionServer(
             self,
@@ -71,8 +81,8 @@ class CoffeeGrounds(Node):
             self,
             GroundsAction,
             'dump',
-            self.dump_coffee_filter)   
-          
+            self.dump_coffee_filter)
+
         # Create tf listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -85,7 +95,6 @@ class CoffeeGrounds(Node):
                                 "panda_manipulator",
                                 "joint_states",
                                 "panda")
-
 
     def fill_coffee_maker(self, goal_handle):
         result = GroundsAction()
@@ -103,7 +112,6 @@ class CoffeeGrounds(Node):
         result.complete = True
         return result
 
-
     def dump_coffee_filter(self, goal_handle):
         result = GroundsAction()
         result.status = 0
@@ -115,7 +123,6 @@ class CoffeeGrounds(Node):
         result.status = 3
         result.complete = True
         return result
-
 
     async def grab_scoop(self):
         tf = self.buffer.lookup_transform(
@@ -148,7 +155,6 @@ class CoffeeGrounds(Node):
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
-
     async def scoop_grounds(self):
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_grounds_tag", Time())
@@ -179,7 +185,6 @@ class CoffeeGrounds(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-    
 
     async def dump_grounds(self):
         tf = self.buffer.lookup_transform(
@@ -211,7 +216,6 @@ class CoffeeGrounds(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-    
 
     async def return_scoop(self):
         tf = self.buffer.lookup_transform(
@@ -243,7 +247,6 @@ class CoffeeGrounds(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-    
 
     async def grab_filter(self):
         tf = self.buffer.lookup_transform(
@@ -276,7 +279,6 @@ class CoffeeGrounds(Node):
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
-
     async def flip_shake_filter(self):
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_TRASH_tag", Time())
@@ -308,7 +310,6 @@ class CoffeeGrounds(Node):
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
-
     async def place_filter(self):
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_XXXX_tag", Time())
@@ -339,7 +340,6 @@ class CoffeeGrounds(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-
 
     async def measure_coffee_height(self):
         pass

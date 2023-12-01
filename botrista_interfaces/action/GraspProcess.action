@@ -1,0 +1,11 @@
+# Goal
+geometry_msgs/Pose observe_pose # relative to the robot
+
+geometry_msgs/Point approach_pose # relative to the handle
+geometry_msgs/Point grasp_pose # relative to the handle
+geometry_msgs/Point retreat_pose # relative to the handle
+---
+# Result
+geometry_msgs/TransformStamped actual_grasp_pose
+---
+# Feedback

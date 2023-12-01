@@ -87,15 +87,28 @@ class HandleDetector(Node):
 
         # convert ros image msg to opencv mat
         cv_img = self.cv_bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
-        thresholded = self.threshold_image(cv_img)
-        handle_contour = self.find_handle_contour(thresholded)
+        handle_thresh = self.threshold_image(
+            cv_img,
+            (self.hue[0], self.saturation[0], self.value[0]),
+            (self.hue[1], self.saturation[1], self.value[1]))
+        yellow_thresh = self.threshold_image(
+            cv_img,
+            (4, 93, 84),
+            (64, 255, 255)
+        )
+        handle_contour = self.find_handle_contour(handle_thresh)
+        direction_contour = self.find_handle_contour(yellow_thresh)
 
-        if handle_contour is not None:
-            pose = self.contour_to_depth(handle_contour, thresholded, cv_img)
+        if handle_contour is not None and direction_contour is not None:
+            pose = self.contour_to_depth(
+                handle_contour, handle_thresh, direction_contour, cv_img)
+
+            if pose is None:
+                return
 
             try:
                 tf = self.tf_buffer.lookup_transform("panda_link0",
-                                                     "d405_depth_optical_frame",
+                                                     "d405_color_optical_frame",
                                                      time=Time(seconds=0.0))
                 pose_panda0 = tf2_geometry_msgs.do_transform_pose(pose, tf)
                 self.transform_broadcaster.sendTransform(
@@ -111,7 +124,7 @@ class HandleDetector(Node):
                                 y=pose_panda0.position.y,
                                 z=pose_panda0.position.z
                             ),
-                            rotation=Quaternion()
+                            rotation=pose_panda0.orientation
                         )
                     )
                 )
@@ -119,12 +132,17 @@ class HandleDetector(Node):
                 self.get_logger().warn(f"Exception: {e}")
                 pass
 
-    def contour_to_depth(self, contour, image, raw):
+    def contour_to_depth(self, contour, image, direction_contour, raw):
 
         # Get center of the contour
         M = cv2.moments(contour)
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
+
+        # Get center of the direction contour
+        M = cv2.moments(direction_contour)
+        dX = int(M["m10"] / M["m00"])
+        dY = int(M["m01"] / M["m00"])
 
         # create a mask for the contour
         mask = np.zeros_like(image)
@@ -146,8 +164,35 @@ class HandleDetector(Node):
             raw, [contour], -1, (255, 255, 255), 2)
         contour_img = cv2.circle(
             contour_img, (cX, cY), 7, (255, 255, 255), -1)
+        # contour_img = cv2.circle(
+        #     contour_img, (dX, dY), 7, (0, 0, 255), -1)
+
+        # find the minimum area rectangle of the contour
+        rotated_rect = cv2.minAreaRect(contour)
+
+        # draw box
+        box = cv2.boxPoints(rotated_rect)
+        box = np.int0(box)
+        horizontal = np.array([1, 0])
+        vec = np.subtract(np.array([dX, dY]), np.array([cX, cY]))
+        dot = np.dot(horizontal, vec)
+        det = np.linalg.det(np.vstack([horizontal, vec]))
+        angle = np.arctan2(det, dot)
+
+        # draw angle
+        cv2.putText(contour_img, f"{int(angle * 180 / np.pi)}", (cX, cY),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+        # draw vector between center and direction
+        cv2.arrowedLine(contour_img, (cX, cY), (dX, dY), (0, 0, 255), 2)
+
+        # contour_img = cv2.drawContours(contour_img, [box], 0, (0, 0, 255), 2)
+
         self.depth_publisher.publish(
             self.cv_bridge.cv2_to_imgmsg(contour_img))
+
+        if not depth_mask.any():
+            return None
 
         # use all non-zero values as the depth, zero values are invalid
         depth_mask_filtered = depth_mask[depth_mask != 0]
@@ -170,8 +215,34 @@ class HandleDetector(Node):
                 x=point[0],
                 y=point[1],
                 z=point[2]),
-            orientation=Quaternion()
+            orientation=euler_to_quaternion(angle, 0, 0)
         )
+
+    def get_rect_angle(self, rect_points, height):
+        edge1 = np.subtract(rect_points[1], rect_points[0])
+        edge2 = np.subtract(rect_points[2], rect_points[1])
+
+        use_edge = edge1
+        used_points = [rect_points[0], rect_points[1]]
+        if np.linalg.norm(edge2) > np.linalg.norm(edge1):
+            use_edge = edge2
+            used_points = [rect_points[1], rect_points[2]]
+
+        mid_y = int(height / 2.0)
+        if np.abs((used_points[0][1] - mid_y)) > np.abs((used_points[1][1] - mid_y)):
+            use_edge = -use_edge
+
+        horizontal = np.array([0, 1])
+        # dot = np.dot(horizontal, use_edge)
+        # det = np.linalg.det(np.vstack([horizontal, use_edge]))
+        angle = np.arctan2(use_edge[0]-horizontal[0],
+                           use_edge[1]-horizontal[1])
+
+        # angle = np.arccos(np.dot(use_edge, horizontal) /
+        #                   (np.linalg.norm(use_edge) * np.linalg.norm(horizontal)))
+        # veritcal = np.array([0, 1])
+        # angle *= np.sign(np.dot(use_edge, veritcal))
+        return angle, use_edge
 
     def find_handle_contour(self, image):
         """
@@ -205,7 +276,7 @@ class HandleDetector(Node):
         largest = max(contours, key=lambda cnt: cv2.contourArea(cnt))
         return largest
 
-    def threshold_image(self, image):
+    def threshold_image(self, image, low, upper):
         """
         Thresholds the image to isolate the handle.
 
@@ -218,8 +289,22 @@ class HandleDetector(Node):
 
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         return cv2.inRange(hsv_image,
-                           (self.hue[0], self.saturation[0], self.value[0]),
-                           (self.hue[1], self.saturation[1], self.value[1]))
+                           low,
+                           upper)
+
+
+def euler_to_quaternion(yaw, pitch, roll):
+
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - \
+        np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + \
+        np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - \
+        np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + \
+        np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+    return Quaternion(x=qx, y=qy, z=qz, w=qw)
 
 
 def handle_detector_entry(args=None):
