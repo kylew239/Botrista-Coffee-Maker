@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
      "action/PourAction.action" # Whatever message file you've defined
      "action/GraspProcess.action"
      "action/EmptyAction.action"
+     "action/GroundsAction.action"
      DEPENDENCIES geometry_msgs franka_msgs
      )
 

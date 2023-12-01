@@ -26,7 +26,7 @@ class Pouring(Node):
         self.get_logger().warn("Pouring started")
 
         # Creating Parameters
-        self.declare_parameter("pour_begin_offset", 0.05,
+        self.declare_parameter("pour_begin_offset", 0.15,
                                ParameterDescriptor(
                                    description="Z distance to move to before pouring"))
         self.pour_height_offset = self.get_parameter("pour_begin_offset")\
@@ -66,8 +66,8 @@ class Pouring(Node):
                 req.pour_frame,
                 rclpy.time.Time())
             startVec = tf.transform.translation
-            startPoint = Point(x=startVec.x, y=startVec.y -
-                               offset, z=startVec.z)
+            startPoint = Point(x=startVec.x,
+                               y=startVec.y, z=startVec.z)
         except TransformException:
             feedback.stage = f"Failed to get transform to {req.pour_frame}"
             goal_handle.publish_feedback(feedback)
@@ -92,8 +92,8 @@ class Pouring(Node):
         standoff_point.z += self.pour_height_offset
         standoffPose = Pose(position=standoff_point,
                             orientation=startOre)
-        waypoints.append(standoffPose)
-        waypoints.insert(0, standoffPose)
+        # waypoints.append(standoffPose)
+        # waypoints.insert(0, standoffPose)
 
         # Planning
         feedback.stage = "Planning path"
@@ -157,19 +157,19 @@ def get_spiral_waypoints(startPoint: Point,
         # Calculating new point
         th = count*thStep
         r = th*b
-        x = r*math.cos(th)
-        y = r*math.sin(th)
-        z = 0
+        x_n = r*math.cos(th) + startPoint.x
+        y_n = r*math.sin(th) + startPoint.y
+        z_n = startPoint.z
 
-        # Transform by offset
-        x_n = x + startPoint.x
-        y_n = y + startPoint.y
-        z_n = z + startPoint.z + offset*math.sin(tilt_ang)
+        # # Transform by offset
+        # x_n = x + startPoint.x
+        # y_n = y + startPoint.y
+        # z_n = z + startPoint.z + offset*math.sin(tilt_ang)
 
         poseList.append(Pose(position=Point(x=x_n,
                                             y=y_n,
                                             z=z_n),
-                             orientation=tiltOre))
+                             orientation=startOre))
 
         count += 1
 
@@ -211,8 +211,8 @@ def angle_between_quaternions(q0, q1):
 
     r, p, y = euler_from_quaternion(q0q1_x, q0q1_y, q0q1_z, q0q1_w)
 
-    # we only care about roll because we rotate about the x-axis
-    return abs(r)
+    # we only care about pitch because we rotate about the y-axis
+    return abs(p)
 
 
 def euler_from_quaternion(x, y, z, w):

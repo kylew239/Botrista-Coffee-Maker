@@ -4,17 +4,19 @@ import tf2_geometry_msgs
 from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
-from geometry_msgs.msg import Pose, Point, Quaternion, TransformStamped
+from geometry_msgs.msg import Pose, Point, Quaternion, TransformStamped, Transform, Vector3
 from std_srvs.srv import Empty
+from std_msgs.msg import Header
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
 from franka_msgs.msg import GraspEpsilon
 from rclpy.callback_groups import ReentrantCallbackGroup
 from time import sleep
-from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction, GraspProcess
 from rclpy.action import ActionServer, ActionClient
+from botrista_interfaces.action import PourAction
+from shape_msgs.msg import SolidPrimitive
 
 
 class Kettle(Node):
@@ -43,10 +45,20 @@ class Kettle(Node):
                                                 "place_kettle",
                                                 self.place_kettle_cb,
                                                 callback_group=ReentrantCallbackGroup())
+        self.pour_kettle_server = ActionServer(self,
+                                               EmptyAction,
+                                               "pour_kettle",
+                                               self.pour_kettle_cb,
+                                               callback_group=ReentrantCallbackGroup())
         self.grasp_process = ActionClient(self,
                                           GraspProcess,
                                           'grasp_process',
                                           callback_group=ReentrantCallbackGroup())
+
+        self.pour_kettle = ActionClient(self,
+                                        PourAction,
+                                        'pour_action',
+                                        callback_group=ReentrantCallbackGroup())
 
         while not self.delay_client.wait_for_service(timeout_sec=2.0):
             self.get_logger().warn("Waiting for delay service")
@@ -108,79 +120,11 @@ class Kettle(Node):
 
         goal_handle.succeed()
         return EmptyAction.Result()
-        # try:
-        #     tf = self.buffer.lookup_transform(
-        #         "panda_link0", "filtered_pour_over_tag", Time())
-
-        # except Exception as e:
-        #     self.get_logger().error("No transform found")
-        #     return
-
-        # # go to the observe pose
-        # observe_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.observe_pose, tf)
-        # await self.moveit_api.plan_async(point=observe_pose.position, orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0), execute=True)
-        # await self.delay_client.call_async(Empty.Request())
-
-        # # get the handle tf
-        # handle_tf = self.buffer.lookup_transform(
-        #     "panda_link0", "handle", time=Time(seconds=0.0))
-        # self.get_logger().warn(f"HANDLE TF: {handle_tf}")
-
-        # observe_point = tf2_geometry_msgs.do_transform_pose(
-        #     self.approach_pose, handle_tf)
-
-        # self.get_logger().warn(f"OBSERVE POINT: {observe_point}")
-        # await self.moveit_api.plan_async(point=observe_point.position, orientation=observe_point.orientation, execute=True)
-        # await self.delay_client.call_async(Empty.Request())
-        # handle_tf = self.buffer.lookup_transform(
-        #     "panda_link0", "handle", time=Time(seconds=0.0))
-
-        # # put the grasp points in into panda frame
-        # approach_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.approach_pose, handle_tf)
-        # grasp_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.grasp_pose, handle_tf)
-        # retreat_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.retreat_pose, handle_tf)
-
-        # grasp_plan = GraspPlan(
-        #     approach_pose=approach_pose,
-        #     grasp_pose=grasp_pose,
-        #     grasp_command=Grasp.Goal(
-        #         width=0.03,
-        #         force=50.0,
-        #         speed=0.05,
-        #         epsilon=GraspEpsilon(inner=0.01, outer=0.01)
-        #     ),
-        #     retreat_pose=retreat_pose,
-        # )
-
-        # await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
     async def place_kettle_cb(self, goal_handle):
         """
         Places the kettle on its stand.
         """
-        # tf = self.buffer.lookup_transform(
-        #     "panda_link0", "filtered_kettle_tag", Time())
-
-        # # play the grasp plan backwards to place the kettle
-        # approach_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.retreat_pose, tf)
-
-        # hover_pose = Pose(
-        #     position=Point(
-        #         x=0.09,
-        #         y=0.043,
-        #         z=0.18),
-        #     orientation=Quaternion(x=0.88, y=-0.035, z=0.47, w=0.01)
-        # )
-        # # Using stored grasp pose instead of calculated one
-        # # grasp_pose = tf2_geometry_msgs.do_transform_pose(hover_pose, tf)
-        # retreat_pose = tf2_geometry_msgs.do_transform_pose(
-        #     self.approach_pose, tf)
-
         approach_pose = Pose(
             position=Point(x=0.0, y=0.0, z=-0.1),
             orientation=Quaternion()
@@ -218,6 +162,103 @@ class Kettle(Node):
 
         goal_handle.succeed()
         return EmptyAction.Result()
+
+    async def pour_kettle_cb(self, goal_handle):
+        try:
+            pot_top_tf = self.buffer.lookup_transform(
+                "panda_link0", "pot_top", Time())
+        except Exception as e:
+            self.get_logger().error("No transform found")
+            return
+
+        tf = TransformStamped(
+            header=Header(
+                frame_id="panda_link0",
+                stamp=self.get_clock().now().to_msg()
+            ),
+            transform=Transform(
+                translation=Vector3(x=-0.23, y=0.0, z=0.02),
+                rotation=Quaternion()
+            )
+        )
+
+        approach_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.20),
+            orientation=Quaternion(
+                x=1.0, y=0.0, z=0.0, w=0.0)
+        )
+
+        pour_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.20),
+            orientation=Quaternion(
+                x=0.9452608, y=0.0, z=-0.3150869, w=-0.0848662)
+        )
+        # transform to spout
+        approach_pose = tf2_geometry_msgs.do_transform_pose(
+            approach_pose, tf)
+        pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, tf)
+
+        # transform to pot_top
+        approach_pose = tf2_geometry_msgs.do_transform_pose(
+            approach_pose, pot_top_tf)
+        pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
+        # transform to world
+        # approach_pose = tf2_geometry_msgs.do_transform_pose(
+        #     approach_pose, pot_top_tf)
+        # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
+        # # transform to world
+        # approach_pose = tf2_geometry_msgs.do_transform_pose(
+        #     approach_pose, pot_top_tf)
+        # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
+
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+        result = await self.moveit_api.plan_async(
+            point=pour_pose.position,
+            orientation=pour_pose.orientation,
+            execute=True
+        )
+
+        # ATTEMPTING SPIRAL
+        goal_msg = PourAction.Goal(
+            num_points=100,
+            spiral_radius=0.04,
+            num_loops=4.0,
+            start_outside=False,
+            y_offset=0.0,
+            pour_frame="panda_hand_tcp",
+        )
+        result = await self.pour_kettle.send_goal_async(goal_msg)
+        res = await result.get_result_async()
+
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+        goal_handle.succeed()
+        return EmptyAction.Result()
+
+    async def create_kettle_attached_object(self):
+        pose = Pose(
+            position=Point(x=0.23, y=0.0, z=0.02),
+            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
+        )
+        primitive = SolidPrimitive(
+            type=SolidPrimitive.SPHERE,
+            dimensions=[0.01]
+        )
+        self.moveit_api.createAttachObject(
+            "spout", [pose], [primitive]
+        )
+
+        await self.moveit_api.attachObjectToEE("spout")
+        self.moveit_api.set_ee_frame("spout/spout")
 
 
 def kettle_entry(args=None):
