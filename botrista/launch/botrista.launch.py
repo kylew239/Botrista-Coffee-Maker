@@ -80,6 +80,10 @@ def generate_launch_description():
             package="botrista",
             executable="pot_node"
         ),
+        Node(
+            package="botrista",
+            executable="coffee_ground_node"
+        ),
         # Node(
         #     package="botrista",
         #     executable="cup_detection",
