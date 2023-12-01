@@ -9,6 +9,8 @@ from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
+from franka_msgs.msg import GraspEpsilon
+from rclpy.callback_groups import ReentrantCallbackGroup
 from time import sleep
 from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction, GraspProcess
