@@ -31,6 +31,11 @@ class CoffeeGrounds(Node):
     """
 
     def __init__(self):
+        """
+        Description:
+            Initializes the CoffeeGrounds node
+        """
+        # define approach, grasp, and retreat positions
         super().__init__('coffee_grounds')
         self.scoop_offset_pos = Point(x=0.1, y=0.0, z=0.2)
         self.grounds_offset_pos = Point(x=0.1, y=0.0, z=0.2)
@@ -50,6 +55,7 @@ class CoffeeGrounds(Node):
         self.filter_center_offset_pos_retreat = Point(x=0.1, y=0.0, z=0.2)
         self.dump_position_retreat = Point(x=0.5, y=0.5, z=0.2)
 
+        # define orientations
         self.scoop_offset_orient = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.grounds_offset_orient_approach = Quaternion(
             x=0.0, y=0.0, z=0.0, w=1.0)
@@ -65,6 +71,7 @@ class CoffeeGrounds(Node):
         self.dump_orientation_upright = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         self.dump_orientation_dump = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
 
+        # define grasp commands
         self.grasp_command_scoop = Grasp.Goal(
             width=0.02, force=50.0, speed=0.05)
         self.grasp_command_filter = Grasp.Goal(
@@ -72,11 +79,13 @@ class CoffeeGrounds(Node):
         self.grasp_command_open = Grasp.Goal(
             width=0.02, force=50.0, speed=0.05)
 
+        # start action server for scooping routine
         self.scoop_action_server = ActionServer(
             self,
             GroundsAction,
             'scoop',
             self.fill_coffee_maker)
+        # start action server for dumping coffee grounds routine
         self.dump_action_server = ActionServer(
             self,
             GroundsAction,
@@ -97,6 +106,10 @@ class CoffeeGrounds(Node):
                                 "panda")
 
     def fill_coffee_maker(self, goal_handle):
+        """
+        Description:
+            Action callback for the scooping routine, scoops coffee and dumps it in the filter
+        """
         result = GroundsAction()
         result.status = 0
         self.measure_coffee_height()
@@ -113,6 +126,10 @@ class CoffeeGrounds(Node):
         return result
 
     def dump_coffee_filter(self, goal_handle):
+        """
+        Description:
+            Action callback for the dumping grounds routine, dumps coffee grounds from filter into trash
+        """
         result = GroundsAction()
         result.status = 0
         self.grab_filter()
@@ -125,6 +142,10 @@ class CoffeeGrounds(Node):
         return result
 
     async def grab_scoop(self):
+        """
+        Description:
+            Function to pick up the coffee scoop
+        """
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_scoop_tag", Time())
 
