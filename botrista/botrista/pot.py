@@ -1,10 +1,10 @@
 import rclpy
 from rclpy.node import Node
 import tf2_geometry_msgs
-from tf2_ros import Buffer, TransformListener
+from tf2_ros import Buffer, TransformListener, StaticTransformBroadcaster
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
-from geometry_msgs.msg import Pose, Point, Quaternion, TransformStamped
+from geometry_msgs.msg import Pose, Point, Quaternion, TransformStamped, Transform, Vector3
 from std_srvs.srv import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
@@ -13,6 +13,7 @@ from time import sleep
 from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction, GraspProcess
 from rclpy.action import ActionServer, ActionClient
+from std_msgs.msg import Header
 
 
 class Pot(Node):
@@ -23,6 +24,7 @@ class Pot(Node):
         self.pot_actual_place = TransformStamped()
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
+        self.static_broadcaster = StaticTransformBroadcaster(self)
         self.moveit_api = MoveItApi(
             self, "panda_link0", "panda_hand_tcp", "panda_manipulator", "/franka/joint_states")
         self.grasp_planner = GraspPlanner(
@@ -50,7 +52,7 @@ class Pot(Node):
             self.get_logger().warn("Waiting for delay service")
 
         self.observe_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=0.40),
+            position=Point(x=0.0, y=0.0, z=0.30),
             orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
         )
 
@@ -67,6 +69,20 @@ class Pot(Node):
         self.retreat_pose = Pose(
             position=Point(x=0.0, y=0.0, z=-0.10),
             orientation=Quaternion())
+
+        self.top_tf = TransformStamped(
+            header=Header(
+                frame_id="filtered_pour_over_tag",
+                stamp=self.get_clock().now().to_msg()
+            ),
+            child_frame_id="pot_top",
+            transform=Transform(
+                translation=Vector3(x=0.155, y=0.035, z=0.165),
+                rotation=Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+            )
+        )
+
+        self.static_broadcaster.sendTransform(self.top_tf)
 
     async def pick_pot_cb(self, goal_handle):
         """
