@@ -126,7 +126,7 @@ class Kettle(Node):
         goal = await self.grasp_process.send_goal_async(goal_msg)
         res = await goal.get_result_async()
         self.kettle_actual_place = res.result.actual_grasp_pose
-
+        self.create_kettle_attached_object()
         goal_handle.succeed()
         return EmptyAction.Result()
 
