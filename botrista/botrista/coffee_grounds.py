@@ -2,7 +2,6 @@ from rclpy.node import Node
 import rclpy
 import numpy as np
 from moveit_wrapper.moveitapi import MoveItApi
-from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan
 import tf2_geometry_msgs
 from franka_msgs.msg import GraspEpsilon
@@ -339,7 +338,7 @@ class CoffeeGrounds(Node):
         )
 
         retreat_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.10),
+            position=Point(x=-0.02, y=-0.02, z=-0.20),
             orientation=Quaternion()
         )
 
