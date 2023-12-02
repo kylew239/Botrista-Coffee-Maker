@@ -117,7 +117,7 @@ class CoffeeGrounds(Node):
                 x=0.0, y=0.0, z=0.0, w=1.0)
         )
 
-        # define scooping poses (relative to coffee ground april tag)
+        # define scooping poses (relative to coffee grounds april tag)
         self.scoop_pose_measure = Pose(
             position=Point(
                 x=0.1, y=0.0, z=0.2),
@@ -266,65 +266,73 @@ class CoffeeGrounds(Node):
 
     async def scoop_grounds(self):
         tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered_grounds_tag", Time())
-
-        approach_pose = Pose(
-            position=self.grounds_offset_pos_approach,
-            orientation=self.grounds_offset_orient_approach
-        )
-        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
-
-        grasp_pose = Pose(
-            position=self.grounds_offset_pos,
-            orientation=self.grounds_offset_orient
-        )
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
-
-        retreat_pose = Pose(
-            position=self.grounds_offset_pos_retreat,
-            orientation=self.grounds_offset_orient_retreat
-        )
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
-
-        grasp_plan = GraspPlan(
-            approach_pose=approach_pose,
-            grasp_pose=grasp_pose,
-            grasp_command=self.grasp_command_scoop,
-            retreat_pose=retreat_pose,
-        )
-
-        await self.grasp_planner.execute_grasp_plan(grasp_plan)
+            "filtered_grounds_tag", "panda_link0", Time())
+        
+        scoop_pose_1 = tf2_geometry_msgs.do_transform_pose(
+            self.scoop_pose_1, tf)
+        scoop_pose_2 = tf2_geometry_msgs.do_transform_pose(
+            self.scoop_pose_2, tf)
+        scoop_pose_3 = tf2_geometry_msgs.do_transform_pose(
+            self.scoop_pose_3, tf)
+        
+        fut1 = self.moveit_api.plan(
+                        point=scoop_pose_1.position,
+                        orientation=scoop_pose_1.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut1
+        
+        fut2 = self.moveit_api.plan(
+                        point=scoop_pose_2.position,
+                        orientation=scoop_pose_2.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut2
+        
+        fut3 = self.moveit_api.plan(
+                        point=scoop_pose_3.position,
+                        orientation=scoop_pose_3.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut3
 
     async def dump_grounds(self):
         tf = self.buffer.lookup_transform(
-            "panda_link0", "filtered_XXXX_tag", Time())
-
-        approach_pose = Pose(
-            position=self.filter_center_offset_pos_approach,
-            orientation=self.filter_center_offset_orient_upright
-        )
-        approach_pose = tf2_geometry_msgs.do_transform_pose(approach_pose, tf)
-
-        grasp_pose = Pose(
-            position=self.filter_center_offset_pos,
-            orientation=self.filter_center_offset_orient_flipped
-        )
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, tf)
-
-        retreat_pose = Pose(
-            position=self.filter_center_offset_pos_retreat,
-            orientation=self.filter_center_offset_orient_upright
-        )
-        retreat_pose = tf2_geometry_msgs.do_transform_pose(retreat_pose, tf)
-
-        grasp_plan = GraspPlan(
-            approach_pose=approach_pose,
-            grasp_pose=grasp_pose,
-            grasp_command=self.grasp_command_scoop,
-            retreat_pose=retreat_pose,
-        )
-
-        await self.grasp_planner.execute_grasp_plan(grasp_plan)
+            "filtered_pour_over_tag", "panda_link0", Time())
+        
+        dump_pose_1 = tf2_geometry_msgs.do_transform_pose(
+            self.dump_pose_1, tf)
+        dump_pose_2 = tf2_geometry_msgs.do_transform_pose(
+            self.dump_pose_2, tf)
+        dump_pose_3 = tf2_geometry_msgs.do_transform_pose(
+            self.dump_pose_3, tf)
+        
+        fut1 = self.moveit_api.plan(
+                        point=dump_pose_1.position,
+                        orientation=dump_pose_1.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut1
+        
+        fut2 = self.moveit_api.plan(
+                        point=dump_pose_2.position,
+                        orientation=dump_pose_2.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut2
+        
+        fut3 = self.moveit_api.plan(
+                        point=dump_pose_3.position,
+                        orientation=dump_pose_3.orientation,
+                        execute=True,
+                        use_jc=True
+                        )
+        await fut3
 
     async def return_scoop(self):
         approach_pose = Pose(
