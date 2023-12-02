@@ -17,6 +17,7 @@ from botrista_interfaces.action import EmptyAction, GraspProcess
 from rclpy.action import ActionServer, ActionClient
 from botrista_interfaces.action import PourAction
 from shape_msgs.msg import SolidPrimitive
+import numpy as np
 
 
 class Kettle(Node):
@@ -83,6 +84,14 @@ class Kettle(Node):
         """
         Grabs the kettle from its stand.
         """
+        # home the panda
+        await self.moveit_api.plan_joint_async(
+            ["panda_joint1", "panda_joint2", "panda_joint3",
+                "panda_joint4", "panda_joint5", "panda_joint6", "panda_joint7"],
+            [0.0, -np.pi / 4.0, 0.0, -3*np.pi / 4.0, 0.0, np.pi / 2.0, np.pi / 4.0],
+            execute=True
+        )
+
         # TFs
         # pour_over_tag
         try:

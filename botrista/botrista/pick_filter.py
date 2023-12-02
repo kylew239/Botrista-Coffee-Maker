@@ -84,7 +84,7 @@ class Pick_filter(Node):
             position=Point(x=0.03, y=0.0, z=-0.01),
             orientation=Quaternion())
         self.retreat_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.30),
+            position=Point(x=0.0, y=0.0, z=-0.20),
             orientation=Quaternion())
 
         self.filter_pot_tf = TransformStamped()
@@ -178,7 +178,7 @@ class Pick_filter(Node):
         )
 
         grasp_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.04),
+            position=Point(x=0.0, y=0.0, z=-0.03),
             orientation=Quaternion()
         )
 
@@ -227,14 +227,14 @@ class Pick_filter(Node):
         )
 
         grasp_pose = Pose(
-            position=Point(x=0.09, y=0.0, z=0.04),
+            position=Point(x=0.09, y=0.02, z=0.04),
             orientation=Quaternion(
                 x=0.0, y=1.0, z=0.0, w=0.0
             )
         )
 
         retreat_pose = Pose(
-            position=Point(x=0.09, y=0.0, z=0.15),
+            position=Point(x=0.09, y=0.02, z=0.20),
             orientation=Quaternion(
                 x=0.0, y=1.0, z=0.0, w=0.0
             )
@@ -271,7 +271,7 @@ class Pick_filter(Node):
         )
 
         grasp_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=0.0),
+            position=Point(x=0.0, y=0.0, z=0.005),
             orientation=Quaternion()
         )
 

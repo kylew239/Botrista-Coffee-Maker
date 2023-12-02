@@ -60,7 +60,7 @@ class CoffeeGrounds(Node):
         # define refinement, approach, grasp, and retreat poses (relative to handle)
         self.scoop_offset_pose_refine = Pose(
             position=Point(
-                x=0.0, y=0.0, z=-0.1),
+                x=0.0, y=0.0, z=-0.20),
             orientation=Quaternion()
         )
         self.filter_center_offset_pose_refine = Pose(
@@ -95,7 +95,7 @@ class CoffeeGrounds(Node):
         )
         self.scoop_offset_pose_grasp = Pose(
             position=Point(
-                x=-0.025, y=-0.005, z=0.0),
+                x=-0.022, y=-0.01, z=0.0),
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
         )
@@ -339,7 +339,7 @@ class CoffeeGrounds(Node):
         )
 
         retreat_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.10),
+            position=Point(x=0.0, y=-0.3, z=-0.18),
             orientation=Quaternion()
         )
 

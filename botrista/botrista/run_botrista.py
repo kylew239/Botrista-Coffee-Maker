@@ -56,8 +56,8 @@ class Botrista(Node):
             self, EmptyAction, 'place_pot', callback_group=ReentrantCallbackGroup())
 
         # start action client for pour_action action
-        self.action_client_pour_action = ActionClient(
-            self, PourAction, 'pour_action', callback_group=ReentrantCallbackGroup())
+        self.action_client_pour_kettle = ActionClient(
+            self, EmptyAction, 'pour_kettle', callback_group=ReentrantCallbackGroup())
 
         # start action client for scoop action
         self.action_client_scoop = ActionClient(
@@ -111,6 +111,10 @@ class Botrista(Node):
         res = await result.get_result_async()
 
         # 7. Pour water from kettle (pour_action action)
+        goal7 = EmptyAction.Goal()
+        result = await self.action_client_pour_kettle.send_goal_async(goal7)
+        res = await result.get_result_async()
+
         # 8. Place Kettle on kettle stand (place_kettle action)
         goal8 = EmptyAction.Goal()
         result = await self.action_client_place_kettle.send_goal_async(goal8)
