@@ -12,7 +12,7 @@ class Delay_Node(Node):
             DelayTime, "delay", self.delay_callback)
 
     def delay_callback(self, request, response):
-        sleep(request)
+        sleep(request.time)
         return response
 
 

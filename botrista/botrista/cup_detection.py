@@ -9,6 +9,7 @@ from tf2_ros import Buffer, TransformListener, TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Vector3, Quaternion
 from rclpy.callback_groups import ReentrantCallbackGroup
 from std_msgs.msg import Empty
+from botrista_interfaces.srv import DelayTime
 import time
 from enum import Enum, auto
 from image_geometry.cameramodels import PinholeCameraModel
@@ -58,7 +59,7 @@ class CupDetection(Node):
         self.cup_y = 0
         self.cup_z = 0
         self.kernel = np.ones((5, 5), np.uint8)
-        self.state = State.START
+        self.state = State.STOPPED
 
         # TF listener and broadcaster intializing
         self.buffer = Buffer()
@@ -69,11 +70,11 @@ class CupDetection(Node):
         # CV Bridge intializing
         self.cv_bridge = CvBridge()
         self.cam = PinholeCameraModel()
+
+        # Subscriber intializing
         self.img_sub = self.create_subscription(
             Image, "image_rect_color", self.img_callback, 10
         )
-
-        # Subscriber intializing
         self.start_sub = self.create_subscription(
             Empty, "start_coffee", self.start_callback, 10
         )
@@ -81,26 +82,36 @@ class CupDetection(Node):
             CameraInfo, "camera_info", self.cam_info_callback, 10
         )
 
+        # Publishing the Image
+        self.depth_publisher = self.create_publisher(
+            Image, "/cup_image", qos_profile=10
+        )
+
         # Service Client intializing
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup()
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
         )
-        while not self.delay_client.wait_for_service(timeout_sec=2.0):
+        while not self.delay_client.wait_for_service(timeout_sec=5.0):
             self.get_logger().warn("Waiting for delay service")
         
         # Timer intializing
         self.timer = self.create_timer(0.1, self.timer_callback)
 
-    def timer_callback(self):
+    async def timer_callback(self):
+        if self.state == State.STOPPED:
+            await self.delay_client.call_async(DelayTime.Request(time=5.0))
+            self.state = State.START
         if self.state == State.CUP:
             self.cup_tf.header.stamp = self.get_clock().now().to_msg()
             self.cup_tf.header.frame_id = "filtered_camera_localizer_tag"
             self.cup_tf.child_frame_id = "cup_location"
             self.cup_tf.transform.translation = Vector3(
-                x=self.cup_x/2,
+                x=self.cup_x,
                 y=-self.cup_y,
                 z=0.115)
             self.get_logger().info(str(self.cup_tf.transform.translation))
+            self.depth_publisher.publish(
+                        self.cv_bridge.cv2_to_imgmsg(self.cv_im))
             self.transform_broadcaster.sendTransform(self.cup_tf)
 
     def start_callback(self, msg: Empty):
@@ -122,51 +133,60 @@ class CupDetection(Node):
                 )
             )
             pixel_tf = (int(point[0]), int(point[1]))
-        except Exception as e:
-            self.get_logger().warn(f"Exception: {e}")
-        if self.state == State.START:
-            cv_im = self.cv_bridge.imgmsg_to_cv2(Image, "bgr8")
-            roi_im = cv_im[
-                pixel_tf[1] - 350: pixel_tf[1] - 100,
-                pixel_tf[0] - 100: pixel_tf[0] + 100,
-                :,
-            ]
-            lower_bound = np.asarray(
-                [self.lower_m[0], self.lower_m[1], self.lower_m[2]]
-            )
-            upper_bound = np.asarray(
-                [self.upper_m[0], self.upper_m[1], self.upper_m[2]]
-            )
-            median = cv2.medianBlur(roi_im, 5)
-            hsv_image = cv2.cvtColor(median, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
-            result = cv2.bitwise_and(roi_im, roi_im, mask=mask)
-            result_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-            circles = cv2.HoughCircles(
-                result_gray,
-                cv2.HOUGH_GRADIENT,
-                1,
-                20,
-                param1=50,
-                param2=30,
-                minRadius=30,
-                maxRadius=50,
-            )
-            if circles is not None:
-                circles = np.uint16(np.around(circles))
-                for i in circles[0, :]:
+            if self.state == State.START:
+                cv_im = self.cv_bridge.imgmsg_to_cv2(Image, "bgr8")
+                roi_im = cv_im[
+                    pixel_tf[1] - 350: pixel_tf[1] - 100,
+                    pixel_tf[0] - 100: pixel_tf[0] + 100,
+                    :,
+                ]
+                lower_bound = np.asarray(
+                    [self.lower_m[0], self.lower_m[1], self.lower_m[2]]
+                )
+                upper_bound = np.asarray(
+                    [self.upper_m[0], self.upper_m[1], self.upper_m[2]]
+                )
+                median = cv2.medianBlur(roi_im, 5)
+                hsv_image = cv2.cvtColor(median, cv2.COLOR_BGR2HSV)
+                mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
+                result = cv2.bitwise_and(roi_im, roi_im, mask=mask)
+                result_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+                circles = cv2.HoughCircles(
+                    result_gray,
+                    cv2.HOUGH_GRADIENT,
+                    1,
+                    20,
+                    param1=50,
+                    param2=30,
+                    minRadius=30,
+                    maxRadius=50,
+                )
+                self.cv_im = cv_im.copy()
+                if circles is not None:
+                    circles = np.uint16(np.around(circles))
+                    circles2=sorted(circles[0],key=lambda x:x[2],reverse=True)
                     self.get_logger().info("Cup!")
+                    i = circles2[0]
                     (self.cup_x, self.cup_y, self.cup_z) = self.cam.projectPixelTo3dRay(
                         (i[0]+(pixel_tf[0]-100),
-                         i[1]+(pixel_tf[1]-350)))
+                        i[1]+(pixel_tf[1]-350)))
+                    cv2.circle(self.cv_im, (i[0]+(pixel_tf[0]-100),
+                        i[1]+(pixel_tf[1]-350)), 7, (0,0,255), -1)
+                    cv2.circle(self.cv_im,(i[0]+(pixel_tf[0]-100),
+                        i[1]+(pixel_tf[1]-350)),i[2],(0,255,0),2)
+                    self.depth_publisher.publish(
+                    self.cv_bridge.cv2_to_imgmsg(self.cv_im))
                     self.state = State.CUP
-            if circles is None:
-                self.get_logger().info("No Cup :(")
+                    
+                if circles is None:
+                    self.get_logger().info("No Cup :(")
+        except Exception as e:
+            self.get_logger().warn(f"Exception: {e}")
 
 
 def cup_detection_entry(args=None):
     rclpy.init(args=args)
-    time.sleep(5)
+    time.sleep(2)
     cup_detection = CupDetection()
     rclpy.spin(cup_detection)
     rclpy.shutdown()
