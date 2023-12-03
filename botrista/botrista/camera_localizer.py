@@ -7,13 +7,11 @@ from tf2_ros import TransformListener, Buffer, TransformBroadcaster, StaticTrans
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 import numpy as np
 from rclpy.clock import Clock
-import asyncio
-import tf2_geometry_msgs
 
 
 class CameraLocalizer(Node):
     """
-    Localizes the ceiling mounted d435i camera to the robot
+    Handles Localizing both the d435i ceiling camera and the d405 robot camera.
     """
 
     def __init__(self):
@@ -26,16 +24,19 @@ class CameraLocalizer(Node):
         self.static_transform_broadcaster = StaticTransformBroadcaster(
             self)
 
+        # timer to publish transforms
         self.timer = self.create_timer(0.1, self.timer_callback)
+
+        # the tags to filter
         self.tags = ['camera_localizer_tag', 'kettle_tag',
                      'filter_tag', 'pour_over_tag', 'coffee_grounds', 'coffee_scoop']
 
+        # create the filter objects for each tag
         self.filters = [FilterTag(self.transform_broadcaster,
                                   self.buffer,
                                   self.get_clock(),
                                   "d435i_color_optical_frame",
                                   "camera_localizer_tag")]
-
         self.filters.extend([FilterTag(self.transform_broadcaster,
                                        self.buffer,
                                        self.get_clock(),
@@ -44,8 +45,12 @@ class CameraLocalizer(Node):
                                        predict_up=True) for tag in self.tags[1:]])
 
     async def timer_callback(self):
+        """
+        Publish the transform for the d405 and filter each tag..
+        """
+
+        # publish d405 transform to the franka hand
         self.transform_broadcaster.sendTransform(
-            # publish d405 to franka
             TransformStamped(
                 header=Header(
                     stamp=self.get_clock().now().to_msg(),
@@ -75,6 +80,7 @@ class CameraLocalizer(Node):
                 frame_id='filtered_camera_localizer_tag'
             )
 
+            # measured transform between the localizer tag and the robot base
             localizer_tag_to_franka_tf.transform = Transform(
                 translation=Vector3(
                     x=0.555-0.200/2,
@@ -91,24 +97,8 @@ class CameraLocalizer(Node):
             localizer_tag_to_franka_tf.child_frame_id = "panda_link0"
             self.transform_broadcaster.sendTransform(
                 localizer_tag_to_franka_tf)
-            
-            # # find transform from filter_handle to filter tag
-            # localizer_filter_to_handle_tf = TransformStamped()
-            # localizer_filter_to_handle_tf.header = Header(
-            #     stamp=self.get_clock().now().to_msg(), frame_id="filter_tag"
-            # )
 
-            # localizer_filter_to_handle_tf.transform = Transform(
-            #     translation=Vector3(
-            #         x=0.15,
-            #         y=0.03,
-            #     ),
-            #     rotation=Quaternion(x=0.0, y=0.0, z=1.0, w=0.0),
-            # )
-
-            # localizer_filter_to_handle_tf.child_frame_id = "filter_handle"
-            # self.transform_broadcaster.sendTransform(localizer_filter_to_handle_tf)
-
+            # filter the position of each tag.
             for filter in self.filters:
                 filter.filter()
 
@@ -118,6 +108,10 @@ class CameraLocalizer(Node):
 
 
 class FilterTag:
+    """
+    Handles filtering the position of a tag using a Kalman filter
+    and publishing the filtered transform.
+    """
 
     def __init__(self,
                  tf_broadcaster,
@@ -126,6 +120,15 @@ class FilterTag:
                  target_frame,
                  source_frame,
                  predict_up=False):
+        """
+        Arguments:
+            + tf_broadcaster (TransformBroadcaster): The Tf broadcaster to use/
+            + tf_buffer (Buffer): The Tf buffer to use.
+            + clock (Clock): The clock to use.
+            + target_frame (str): The target frame to publish the filtered transform to.
+            + source_frame (str): The source frame to filter.
+            + predict_up (bool): Whether or not to predict the tag facing directly up.
+        """
         self.mean = None
         self.sigma = np.identity(7) * 5.0
         self.tf_broadcaster = tf_broadcaster
@@ -136,6 +139,10 @@ class FilterTag:
         self.predict_up = predict_up
 
     def filter(self):
+        """
+        Run the filter and publish the filtered transform.
+        """
+
         now = self.clock.now()
         s, _ = now.seconds_nanoseconds()
         try:
@@ -166,6 +173,18 @@ class FilterTag:
             self.tf_broadcaster.sendTransform(filtered_tag)
 
     def kalman_filter(self, mean, sigma, zt):
+        """
+        Filter the mean.
+
+        Arguments:
+            + mean (np.array): The previous mean.
+            + sigma (np.array): The previous sigma.
+            + zt (np.array): The new measurement.
+
+        Returns
+        -------
+            A tuple of the (mean_t, sigma_t)
+        """
         # for the state transition it shouldn't move
         A = np.identity(7)
         R = np.identity(7) * 0.01
