@@ -13,9 +13,9 @@ from rclpy.time import Time
 from franka_msgs.msg import GraspEpsilon
 from rclpy.callback_groups import ReentrantCallbackGroup
 from time import sleep
-from botrista_interfaces.action import EmptyAction, GraspProcess
+from botrista_interfaces.action import EmptyAction, GraspProcess, PourAction
 from rclpy.action import ActionServer, ActionClient
-from botrista_interfaces.action import PourAction
+from botrista_interfaces.srv import DelayTime
 from shape_msgs.msg import SolidPrimitive
 import numpy as np
 
@@ -34,7 +34,7 @@ class Kettle(Node):
             self.moveit_api, "panda_gripper/grasp")
 
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup()
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
         )
         self.pick_kettle_client = ActionServer(self,
                                                EmptyAction,

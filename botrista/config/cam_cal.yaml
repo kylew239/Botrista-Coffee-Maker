@@ -1,4 +1,4 @@
 cup_detection:
   ros__parameters:
-    lower_mask: [0,0,190]
-    upper_mask: [55,65,255]
+    lower_mask: [0,0,110]
+    upper_mask: [35,75,255]

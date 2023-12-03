@@ -73,19 +73,6 @@ class CupDetection(Node):
             Image, "image_rect_color", self.img_callback, 10
         )
 
-        self.image_subscription = self.create_subscription(
-            Image, "/camera/d405/color/image_rect_raw", self.image_callback, qos_profile=10)
-
-        # subscription to the depth image
-        self.depth_image_subscription = self.create_subscription(
-            Image, "/camera/d405/aligned_depth_to_color/image_raw",
-            self.depth_image_callback, qos_profile=10
-        )
-        self.camera_info_subscription = self.create_subscription(
-            CameraInfo, "/camera/d405/aligned_depth_to_color/camera_info",
-            self.camera_info_callback, qos_profile=10
-        )
-
         # Subscriber intializing
         self.start_sub = self.create_subscription(
             Empty, "start_coffee", self.start_callback, 10

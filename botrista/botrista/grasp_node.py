@@ -8,6 +8,7 @@ from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 from franka_msgs.action import Grasp
 from rclpy.time import Time
 from botrista_interfaces.action import GraspProcess
+from botrista_interfaces.srv import DelayTime
 from rclpy.action import ActionServer, ActionClient
 from moveit_wrapper.moveitapi import MoveItApi
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -38,7 +39,7 @@ class GraspNode(Node):
             self, "panda_link0", "panda_hand_tcp", "panda_manipulator", "/franka/joint_states")
 
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup()
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
         )
         self.grasp_planner = GraspPlanner(
             self.moveit_api, "panda_gripper/grasp")
@@ -67,7 +68,7 @@ class GraspNode(Node):
         )
         # move to observe point
         await self.moveit_api.plan_async(point=observe_pose.position, orientation=observe_pose.orientation, execute=True)
-        await self.delay_client.call_async(Empty.Request())
+        await self.delay_client.call_async(DelayTime.Request(time=3.0))
 
         # get the handle tf
         handle_tf = self.buffer.lookup_transform(
@@ -81,7 +82,7 @@ class GraspNode(Node):
         self.get_logger().warn(f"REFINEMNENT POINT: {refinement_point}")
 
         await self.moveit_api.plan_async(point=refinement_point.position, orientation=refinement_point.orientation, execute=True)
-        await self.delay_client.call_async(Empty.Request())
+        await self.delay_client.call_async(DelayTime.Request(time=3.0))
         handle_tf = self.buffer.lookup_transform(
             "panda_link0", "handle", time=Time(seconds=0.0))
 

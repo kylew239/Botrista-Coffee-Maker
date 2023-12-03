@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
      "action/GraspProcess.action"
      "action/EmptyAction.action"
      "action/GroundsAction.action"
+     "srv/DelayTime.srv"
      DEPENDENCIES geometry_msgs franka_msgs
      )
 

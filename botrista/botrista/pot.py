@@ -12,6 +12,7 @@ from rclpy.time import Time
 from time import sleep
 from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction, GraspProcess
+from botrista_interfaces.srv import DelayTime
 from rclpy.action import ActionServer, ActionClient
 from std_msgs.msg import Header
 
@@ -31,7 +32,7 @@ class Pot(Node):
             self.moveit_api, "panda_gripper/grasp")
 
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup()
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
         )
         self.pick_pot_client = ActionServer(self,
                                             EmptyAction,

@@ -10,6 +10,7 @@ from franka_msgs.msg import GraspEpsilon
 from geometry_msgs.msg import Point, Quaternion, Pose, TransformStamped
 from rclpy.action import ActionServer, ActionClient
 from botrista_interfaces.action import EmptyAction, GraspProcess
+from botrista_interfaces.srv import DelayTime
 from std_srvs.srv import Empty
 import tf2_geometry_msgs
 from franka_msgs.action import Grasp
@@ -24,7 +25,7 @@ class Pick_filter(Node):
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup()
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
         )
 
         base_frame = "panda_link0"

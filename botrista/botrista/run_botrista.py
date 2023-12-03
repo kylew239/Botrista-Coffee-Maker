@@ -12,7 +12,7 @@ from rclpy.time import Time
 from time import sleep
 from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction
-from botrista_interfaces.action import PourAction
+from botrista_interfaces.srv import DelayTime
 from rclpy.action import ActionServer, ActionClient
 
 
@@ -89,7 +89,7 @@ class Botrista(Node):
 
         # Delay service client
         self.delay_client = self.create_client(
-            Empty, "delay", callback_group=ReentrantCallbackGroup())
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup())
 
         # move it api to home robot
         self.moveit_api = MoveItApi(self,
@@ -136,9 +136,7 @@ class Botrista(Node):
         result = await self.action_client_place_kettle.send_goal_async(goal8)
         res = await result.get_result_async()
         await self.moveit_api.go_home()
-        await self.delay_client.call_async(Empty.Request())
-        await self.delay_client.call_async(Empty.Request())
-        await self.delay_client.call_async(Empty.Request())
+        await self.delay_client.call_async(DelayTime.Request(time=10.0))
 
         # 9. Wait for coffee grounds to soak
         # 10. Pick up Filter from Pot (pick_filter_in_pot action)
