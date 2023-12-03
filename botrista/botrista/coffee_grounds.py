@@ -76,7 +76,7 @@ class CoffeeGrounds(Node):
         )
         self.scoop_offset_pose_approach = Pose(
             position=Point(
-                x=-0.20, y=0.0, z=-0.05),
+                x=-0.15, y=0.0, z=-0.10),
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
         )
@@ -100,7 +100,7 @@ class CoffeeGrounds(Node):
         )
         self.scoop_offset_pose_retreat = Pose(
             position=Point(
-                x=0.0, y=0.0, z=-0.1),
+                x=0.1, y=0.0, z=-0.2),
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
         )
@@ -139,20 +139,19 @@ class CoffeeGrounds(Node):
             orientation=Quaternion(
                 x=0.0, y=0.0, z=0.0, w=1.0))
 
-        # define dumping poses (relative to pot april tag)
+        # define dumping poses (relative to pot top)
         self.dump_pose_1 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
+                x=0.0, y=0.0, z=0.2),
+            orientation=Quaternion())
         self.dump_pose_2 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=0.0, y=0.0, z=0.2),
             orientation=Quaternion(
                 x=0.0, y=0.0, z=0.0, w=1.0))
         self.dump_pose_3 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=0.0, y=0.0, z=0.2),
             orientation=Quaternion(
                 x=0.0, y=0.0, z=0.0, w=1.0))
 
@@ -224,11 +223,115 @@ class CoffeeGrounds(Node):
         # self.measure_coffee_height()
         await self.grab_scoop()
         # self.scoop_grounds()
-        # self.dump_grounds()
+        await self.move_to_pot()
+
+        # go home
+        await self.moveit_api.go_home()
         await self.return_scoop()
 
         goal_handle.succeed()
         return EmptyAction.Result()
+
+    async def move_to_pot(self):
+        """
+        Moves the scoop to the pot to dump grounds.
+        """
+
+        # create horizontal path constraint
+        current_pose = await self.moveit_api.get_end_effector_pose()
+        path_constraints = self.moveit_api.create_path_constraints(
+            current_pose.pose.orientation,
+            y_tol=2 * np.pi,
+            x_tol=np.pi / 8,
+            z_tol=np.pi / 8,
+        )
+
+        # get the pot top pose
+        pot_tf = await self.tf_buffer.lookup_transform_async(
+            "panda_link0", "pot_top", Time())
+
+        self.dump_pose_1.orientation = Quaternion(
+            x=-0.6987058,
+            y=0.0,
+            z=-0.2329019,
+            w=0.6764369
+        )
+
+        dump_pose = tf2_geometry_msgs.do_transform_pose(
+            self.dump_pose_1, pot_tf)
+
+        # MOTION 1) Move to above the pot
+        await self.moveit_api.plan_async(
+            point=dump_pose.position,
+            orientation=dump_pose.orientation,
+            path_constraints=path_constraints,
+            use_jc=False,
+            execute=True,
+            y_tol=np.pi / 6,
+            x_tol=np.pi / 16,
+            z_tol=np.pi / 16,
+        )
+
+        # have the end effector retreat from the center a bit
+        joint_states = self.moveit_api.get_current_joint_state()
+
+        if joint_states["panda_joint7"] > 0:
+            x_offset = 0.04
+        else:
+            x_offset = -0.04
+
+        end_effector_tf = await self.tf_buffer.lookup_transform_async(
+            "panda_link0", "panda_hand_tcp", Time())
+        retreat = Pose(
+            position=Point(x=x_offset, y=0.05, z=-0.1),
+            orientation=Quaternion()
+        )
+        retreat = tf2_geometry_msgs.do_transform_pose(
+            retreat, end_effector_tf)
+
+        # MOTION 2) Retreat backwards to center scoop
+        await self.moveit_api.plan_async(
+            point=retreat.position,
+            orientation=retreat.orientation,
+            use_jc=False,
+            x_tol=0.1,
+            y_tol=0.1,
+            z_tol=0.1,
+            execute=True,
+        )
+
+        # MOTION 3) DUMP
+        joint_states = self.moveit_api.get_current_joint_state()
+        joint_states_start = joint_states.copy()
+
+        if joint_states["panda_joint7"] > 0:
+            joint_states["panda_joint7"] -= np.pi
+        else:
+            joint_states["panda_joint7"] += np.pi
+
+        names = list(joint_states.keys())
+        pos = list(joint_states.values())
+        await self.moveit_api.plan_joint_async(
+            names, pos, execute=True)
+
+        # MOTION 4) Undo rotate
+        names = list(joint_states_start.keys())
+        pos = list(joint_states_start.values())
+        await self.moveit_api.plan_joint_async(
+            names, pos, execute=True)
+
+        # MOTION 5) Retreat from pot
+        above_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.15),
+            orientation=Quaternion()
+        )
+        above_pose = tf2_geometry_msgs.do_transform_pose(
+            above_pose, pot_tf)
+        await self.moveit_api.plan_async(
+            point=above_pose.position,
+            orientation=retreat.orientation,
+            execute=True,
+        )
 
     async def grab_scoop(self):
         """
@@ -299,44 +402,9 @@ class CoffeeGrounds(Node):
         )
         await fut3
 
-    async def dump_grounds(self):
-        tf = self.buffer.lookup_transform(
-            "filtered_pour_over_tag", "panda_link0", Time())
-
-        dump_pose_1 = tf2_geometry_msgs.do_transform_pose(
-            self.dump_pose_1, tf)
-        dump_pose_2 = tf2_geometry_msgs.do_transform_pose(
-            self.dump_pose_2, tf)
-        dump_pose_3 = tf2_geometry_msgs.do_transform_pose(
-            self.dump_pose_3, tf)
-
-        fut1 = self.moveit_api.plan(
-            point=dump_pose_1.position,
-            orientation=dump_pose_1.orientation,
-            execute=True,
-            use_jc=True
-        )
-        await fut1
-
-        fut2 = self.moveit_api.plan(
-            point=dump_pose_2.position,
-            orientation=dump_pose_2.orientation,
-            execute=True,
-            use_jc=True
-        )
-        await fut2
-
-        fut3 = self.moveit_api.plan(
-            point=dump_pose_3.position,
-            orientation=dump_pose_3.orientation,
-            execute=True,
-            use_jc=True
-        )
-        await fut3
-
     async def return_scoop(self):
         approach_pose = Pose(
-            position=Point(x=0.0, y=-0.05, z=0.0),
+            position=Point(x=0.0, y=-0.20, z=0.0),
             orientation=Quaternion()
         )
 

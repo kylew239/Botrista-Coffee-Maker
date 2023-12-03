@@ -87,6 +87,14 @@ class Botrista(Node):
             self.make_coffee_callback,
             callback_group=ReentrantCallbackGroup())
 
+        # move it api to home robot
+        self.moveit_api = MoveItApi(self,
+                                    "panda_link0",
+                                    "panda_hand_tcp",
+                                    "panda_manipulator",
+                                    "joint_states",
+                                    "panda")
+
     async def make_coffee_callback(self, goal_handle):
         # 1. Turns on Kettle (action)
         # 2. Pick up Filter from filter stand (pick_filter action)
@@ -119,6 +127,7 @@ class Botrista(Node):
         goal8 = EmptyAction.Goal()
         result = await self.action_client_place_kettle.send_goal_async(goal8)
         res = await result.get_result_async()
+        await self.moveit_api.go_home()
 
         # 9. Wait for coffee grounds to soak
         # 10. Pick up Filter from Pot (pick_filter_in_pot action)
@@ -141,6 +150,8 @@ class Botrista(Node):
         goal14 = EmptyAction.Goal()
         result = await self.action_client_pick_filter_in_pot.send_goal_async(goal14)
         res = await result.get_result_async()
+
+        await self.moveit_api.go_home()
 
         goal_handle.succeed()
         return EmptyAction.Result()
