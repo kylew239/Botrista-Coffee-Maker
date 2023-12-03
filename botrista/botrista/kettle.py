@@ -194,7 +194,7 @@ class Kettle(Node):
         )
 
         approach_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=0.20),
+            position=Point(x=-0.01, y=0.0, z=0.20),
             orientation=Quaternion(
                 x=1.0, y=0.0, z=0.0, w=0.0)
         )
@@ -222,6 +222,7 @@ class Kettle(Node):
         #     approach_pose, pot_top_tf)
         # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
 
+        ## Pour 1
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
@@ -234,11 +235,41 @@ class Kettle(Node):
             execute=True
         )
 
-        # ATTEMPTING SPIRAL
         goal_msg = PourAction.Goal(
             num_points=100,
             spiral_radius=0.02,
-            num_loops=4.0,
+            num_loops=2.0,
+            start_outside=True,
+            y_offset=0.0,
+            pour_frame="panda_hand_tcp",
+        )
+        result = await self.pour_kettle.send_goal_async(goal_msg)
+        res = await result.get_result_async()
+
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+        self.delay_client.call_async(Empty)
+
+        ## Pour 2
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+        result = await self.moveit_api.plan_async(
+            point=pour_pose.position,
+            orientation=pour_pose.orientation,
+            execute=True
+        )
+
+        goal_msg = PourAction.Goal(
+            num_points=100,
+            spiral_radius=0.02,
+            num_loops=2.0,
             start_outside=False,
             y_offset=0.0,
             pour_frame="panda_hand_tcp",
@@ -251,7 +282,72 @@ class Kettle(Node):
             orientation=approach_pose.orientation,
             execute=True
         )
+        self.delay_client.call_async(Empty)
 
+
+        ## Pour 3
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+        result = await self.moveit_api.plan_async(
+            point=pour_pose.position,
+            orientation=pour_pose.orientation,
+            execute=True
+        )
+
+        goal_msg = PourAction.Goal(
+            num_points=100,
+            spiral_radius=0.02,
+            num_loops=2.0,
+            start_outside=False,
+            y_offset=0.0,
+            pour_frame="panda_hand_tcp",
+        )
+        result = await self.pour_kettle.send_goal_async(goal_msg)
+        res = await result.get_result_async()
+
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+        self.delay_client.call_async(Empty)
+        
+    
+
+        ## Pour 4
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+        result = await self.moveit_api.plan_async(
+            point=pour_pose.position,
+            orientation=pour_pose.orientation,
+            execute=True
+        )
+
+        goal_msg = PourAction.Goal(
+            num_points=100,
+            spiral_radius=0.02,
+            num_loops=2.0,
+            start_outside=False,
+            y_offset=0.0,
+            pour_frame="panda_hand_tcp",
+        )
+        result = await self.pour_kettle.send_goal_async(goal_msg)
+        res = await result.get_result_async()
+
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+        
         goal_handle.succeed()
         return EmptyAction.Result()
 
