@@ -268,8 +268,8 @@ class CoffeeGrounds(Node):
             use_jc=False,
             execute=True,
             y_tol=np.pi / 6,
-            x_tol=np.pi / 20,
-            z_tol=np.pi / 20,
+            x_tol=np.pi / 8,
+            z_tol=np.pi / 8,
         )
 
         # have the end effector retreat from the center a bit
@@ -278,12 +278,12 @@ class CoffeeGrounds(Node):
         if joint_states["panda_joint7"] > 0:
             x_offset = 0.04
         else:
-            x_offset = -0.04
+            x_offset = -0.06
 
         end_effector_tf = await self.tf_buffer.lookup_transform_async(
             "panda_link0", "panda_hand_tcp", Time())
         retreat = Pose(
-            position=Point(x=x_offset, y=0.05, z=-0.1),
+            position=Point(x=x_offset, y=0.05, z=-0.09),
             orientation=Quaternion()
         )
         retreat = tf2_geometry_msgs.do_transform_pose(

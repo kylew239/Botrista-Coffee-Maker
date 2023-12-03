@@ -151,6 +151,8 @@ class Botrista(Node):
         result = await self.action_client_place_filter.send_goal_async(goal11)
         res = await result.get_result_async()
 
+        await self.moveit_api.go_home()
+
         # 12. Pick up Pot from pot stand (pick_pot action)
         goal12 = EmptyAction.Goal()
         result = await self.action_client_pick_pot.send_goal_async(goal12)
