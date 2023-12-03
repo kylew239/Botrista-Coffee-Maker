@@ -213,6 +213,8 @@ class Kettle(Node):
         approach_pose = tf2_geometry_msgs.do_transform_pose(
             approach_pose, pot_top_tf)
         pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
+
+        # TODO: Delete
         # transform to world
         # approach_pose = tf2_geometry_msgs.do_transform_pose(
         #     approach_pose, pot_top_tf)

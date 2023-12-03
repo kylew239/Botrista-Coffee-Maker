@@ -44,10 +44,16 @@ class Pot(Node):
                                              "place_pot",
                                              self.place_pot_cb,
                                              callback_group=ReentrantCallbackGroup())
+        self.pour_pot_server = ActionServer(self,
+                                            EmptyAction,
+                                            "pour_pot",
+                                            self.pour_pot_cb,
+                                            callback_group=ReentrantCallbackGroup())
         self.grasp_process = ActionClient(self,
                                           GraspProcess,
                                           'grasp_process',
                                           callback_group=ReentrantCallbackGroup())
+    
 
         while not self.delay_client.wait_for_service(timeout_sec=2.0):
             self.get_logger().warn("Waiting for delay service")
@@ -164,6 +170,72 @@ class Pot(Node):
         goal_handle.succeed()
         return EmptyAction.Result()
 
+    async def pour_pot_cb(self, goal_handle):
+        try:
+            cup_tf = self.buffer.lookup_transform(
+                "panda_link0", "cup_location", Time())
+        except Exception as e:
+            self.get_logger().error("No transform found")
+            return
+        
+        spout_tf = TransformStamped(
+            header=Header(
+                frame_id="panda_link0",
+                stamp=self.get_clock().now().to_msg()
+            ),
+            transform=Transform(
+                translation=Vector3(x=-0.18, y=0.0, z=0.02),
+                rotation=Quaternion()
+            )
+        )
+
+        cup_tf_approach_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.15),
+            orientation=Quaternion(0, 1, 0, 0)
+        )
+
+        cup_tf_pour_pose = Pose(
+            position=Point(x=0.0, y=0.0, z=0.10),
+            orientation=Quaternion(x=-0.6694633, y=-0.6673387, z=0.1632291, w=0.2825496)
+        )
+
+        # Transform to spout
+        spout_approach_pose = tf2_geometry_msgs.do_transform_pose(
+            cup_tf_approach_pose, spout_tf
+        )
+        spout_pour_pose = tf2_geometry_msgs.do_transform_pose(
+            cup_tf_pour_pose, spout_tf
+        )
+
+        # Transform to cup
+        approach_pose = tf2_geometry_msgs.do_transform_pose(
+            spout_approach_pose, spout_tf
+        )
+        pour_pose = tf2_geometry_msgs.do_transform_pose(
+            spout_pour_pose, spout_tf
+        )
+
+        # Pouring
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+        result = await self.moveit_api.plan_async(
+            point=pour_pose.position,
+            orientation=pour_pose.orientation,
+            execute=True
+        )
+        self.delay_client.call_async(DelayTime(time=1.0))
+        result = await self.moveit_api.plan_async(
+            point=approach_pose.position,
+            orientation=approach_pose.orientation,
+            execute=True
+        )
+
+
+        goal_handle.succeed()
+        return EmptyAction.Result()
 
 def pot_entry(args=None):
     rclpy.init(args=args)
