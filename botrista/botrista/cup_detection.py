@@ -7,6 +7,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from rcl_interfaces.msg import ParameterDescriptor
 from tf2_ros import Buffer, TransformListener, TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Vector3, Quaternion
+from rclpy.callback_groups import ReentrantCallbackGroup
 from std_msgs.msg import Empty
 import time
 from enum import Enum, auto
@@ -51,23 +52,40 @@ class CupDetection(Node):
             self.get_parameter(
                 "upper_mask").get_parameter_value().integer_array_value
         )
+
         # Initialzing variables
         self.cup_x = 0
         self.cup_y = 0
         self.cup_z = 0
         self.kernel = np.ones((5, 5), np.uint8)
         self.state = State.START
-        self.cam = PinholeCameraModel()
+
         # TF listener and broadcaster intializing
         self.buffer = Buffer()
         self.transform_listener = TransformListener(self.buffer, self, qos=10)
         self.transform_broadcaster = TransformBroadcaster(self, qos=10)
         self.cup_tf = TransformStamped()
+
         # CV Bridge intializing
         self.cv_bridge = CvBridge()
+        self.cam = PinholeCameraModel()
         self.img_sub = self.create_subscription(
             Image, "image_rect_color", self.img_callback, 10
         )
+
+        self.image_subscription = self.create_subscription(
+            Image, "/camera/d405/color/image_rect_raw", self.image_callback, qos_profile=10)
+
+        # subscription to the depth image
+        self.depth_image_subscription = self.create_subscription(
+            Image, "/camera/d405/aligned_depth_to_color/image_raw",
+            self.depth_image_callback, qos_profile=10
+        )
+        self.camera_info_subscription = self.create_subscription(
+            CameraInfo, "/camera/d405/aligned_depth_to_color/camera_info",
+            self.camera_info_callback, qos_profile=10
+        )
+
         # Subscriber intializing
         self.start_sub = self.create_subscription(
             Empty, "start_coffee", self.start_callback, 10
@@ -75,6 +93,14 @@ class CupDetection(Node):
         self.cam_info_sub = self.create_subscription(
             CameraInfo, "camera_info", self.cam_info_callback, 10
         )
+
+        # Service Client intializing
+        self.delay_client = self.create_client(
+            Empty, "delay", callback_group=ReentrantCallbackGroup()
+        )
+        while not self.delay_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().warn("Waiting for delay service")
+        
         # Timer intializing
         self.timer = self.create_timer(0.1, self.timer_callback)
 
