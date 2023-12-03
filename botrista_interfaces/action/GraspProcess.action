@@ -1,4 +1,8 @@
 # Goal
+
+int32 object # The id of the object we are picking up
+bool reset_load 
+
 geometry_msgs/Pose observe_pose         # relative to the robot
 geometry_msgs/Pose refinement_pose     # relative to the handle
 geometry_msgs/Pose approach_pose       # relative to the handle

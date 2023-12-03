@@ -268,8 +268,8 @@ class CoffeeGrounds(Node):
             use_jc=False,
             execute=True,
             y_tol=np.pi / 6,
-            x_tol=np.pi / 16,
-            z_tol=np.pi / 16,
+            x_tol=np.pi / 20,
+            z_tol=np.pi / 20,
         )
 
         # have the end effector retreat from the center a bit

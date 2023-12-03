@@ -30,7 +30,7 @@ class GraspNode(Node):
             'grasp_process',
             self.grasp_process,
             callback_group=ReentrantCallbackGroup())
-        
+
         self.buffer = Buffer()
         self.listener = TransformListener(self.buffer, self)
 
@@ -42,6 +42,11 @@ class GraspNode(Node):
         )
         self.grasp_planner = GraspPlanner(
             self.moveit_api, "panda_gripper/grasp")
+
+        self.payloads = {
+            0: None,  # None
+            1: (2.0, [0.05, 0.0, 0.10]),  # Kettle
+        }
 
     async def grasp_process(self, goal_handle):
         """
@@ -93,7 +98,14 @@ class GraspNode(Node):
             grasp_pose=grasp_pose,
             retreat_pose=retreat_pose,
             grasp_command=gripper_command
-            )
+        )
+
+        if (payload := self.payloads[goal_handle.request.object]) is not None:
+            grasp_plan.mass = payload[0]
+            grasp_plan.com = payload[1]
+
+        if goal_handle.request.reset_load:
+            grasp_plan.reset_load = True
 
         actual_grasp_pose = await self.grasp_planner.execute_grasp_plan(grasp_plan)
 
@@ -102,6 +114,7 @@ class GraspNode(Node):
         self.get_logger().warn(f"finished grasp: {result}")
         goal_handle.succeed()
         return result
+
 
 def main(args=None):
     rclpy.init(args=args)

@@ -173,7 +173,7 @@ class Pick_filter(Node):
 
     async def place_filter_cb(self, goal_handle):
         approach_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.1),
+            position=Point(x=0.0, y=0.0, z=-0.20),
             orientation=Quaternion()
         )
 
@@ -183,7 +183,7 @@ class Pick_filter(Node):
         )
 
         retreat_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.1),
+            position=Point(x=0.0, y=0.0, z=-0.20),
             orientation=Quaternion()
         )
 

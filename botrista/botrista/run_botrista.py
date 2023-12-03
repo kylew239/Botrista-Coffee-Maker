@@ -87,6 +87,10 @@ class Botrista(Node):
             self.make_coffee_callback,
             callback_group=ReentrantCallbackGroup())
 
+        # Delay service client
+        self.delay_client = self.create_client(
+            Empty, "delay", callback_group=ReentrantCallbackGroup())
+
         # move it api to home robot
         self.moveit_api = MoveItApi(self,
                                     "panda_link0",
@@ -123,11 +127,18 @@ class Botrista(Node):
         result = await self.action_client_pour_kettle.send_goal_async(goal7)
         res = await result.get_result_async()
 
+        goal7 = EmptyAction.Goal()
+        result = await self.action_client_pour_kettle.send_goal_async(goal7)
+        res = await result.get_result_async()
+
         # 8. Place Kettle on kettle stand (place_kettle action)
         goal8 = EmptyAction.Goal()
         result = await self.action_client_place_kettle.send_goal_async(goal8)
         res = await result.get_result_async()
         await self.moveit_api.go_home()
+        await self.delay_client.call_async(Empty.Request())
+        await self.delay_client.call_async(Empty.Request())
+        await self.delay_client.call_async(Empty.Request())
 
         # 9. Wait for coffee grounds to soak
         # 10. Pick up Filter from Pot (pick_filter_in_pot action)

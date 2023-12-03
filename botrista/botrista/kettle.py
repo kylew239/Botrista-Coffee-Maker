@@ -74,10 +74,10 @@ class Kettle(Node):
             position=Point(x=0.0, y=0.0, z=-0.10),
             orientation=Quaternion())
         self.grasp_pose = Pose(
-            position=Point(x=0.02, y=0.0, z=0.0),
+            position=Point(x=0.03, y=0.0, z=0.0),
             orientation=Quaternion())
         self.retreat_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.10),
+            position=Point(x=0.03, y=0.0, z=-0.10),
             orientation=Quaternion())
 
     async def pick_kettle_cb(self, goal_handle):
@@ -118,7 +118,8 @@ class Kettle(Node):
             force=50.0,
             speed=0.05,
             epsilon=GraspEpsilon(inner=0.01, outer=0.01),
-            retreat_pose=self.retreat_pose
+            retreat_pose=self.retreat_pose,
+            object=1
         )
 
         self.get_logger().warn("MADE GRASP PROCESS GOAL")
@@ -126,7 +127,7 @@ class Kettle(Node):
         goal = await self.grasp_process.send_goal_async(goal_msg)
         res = await goal.get_result_async()
         self.kettle_actual_place = res.result.actual_grasp_pose
-        self.create_kettle_attached_object()
+        # self.create_kettle_attached_object()
         goal_handle.succeed()
         return EmptyAction.Result()
 
@@ -165,6 +166,7 @@ class Kettle(Node):
                 speed=0.2,
             ),
             retreat_pose=approach_pose,
+            reset_load=True
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
@@ -198,7 +200,7 @@ class Kettle(Node):
         )
 
         pour_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=0.20),
+            position=Point(x=0.01, y=0.005, z=0.17),
             orientation=Quaternion(
                 x=0.9452608, y=0.0, z=-0.3150869, w=-0.0848662)
         )
@@ -235,7 +237,7 @@ class Kettle(Node):
         # ATTEMPTING SPIRAL
         goal_msg = PourAction.Goal(
             num_points=100,
-            spiral_radius=0.04,
+            spiral_radius=0.02,
             num_loops=4.0,
             start_outside=False,
             y_offset=0.0,

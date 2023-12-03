@@ -7,11 +7,12 @@ from std_srvs.srv import Empty
 class Delay_Node(Node):
     def __init__(self):
         super().__init__("delay_node")
-        self.delay_timer = self.create_service(Empty, "delay", self.delay_callback)
+        self.delay_timer = self.create_service(
+            Empty, "delay", self.delay_callback)
 
-    def delay_callback(self, request, responce):
+    def delay_callback(self, request, response):
         sleep(3)
-        return responce
+        return response
 
 
 def delay_entry(args=None):
