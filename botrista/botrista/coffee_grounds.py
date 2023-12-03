@@ -43,18 +43,6 @@ class CoffeeGrounds(Node):
             orientation=Quaternion(
                 x=.707388, y=-0.706825, z=0.0005629, w=0.0005633)
         )
-        self.filter_center_offset_pose_observe = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
-        self.filter_dump_pose_observe = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
 
         # define refinement, approach, grasp, and retreat poses (relative to handle)
         self.scoop_offset_pose_refine = Pose(
@@ -62,35 +50,11 @@ class CoffeeGrounds(Node):
                 x=0.0, y=0.0, z=-0.20),
             orientation=Quaternion()
         )
-        self.filter_center_offset_pose_refine = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
-        self.filter_dump_pose_refine = Pose(
-            position=Point(
-                x=-0.05, y=0.0, z=0.0),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
         self.scoop_offset_pose_approach = Pose(
             position=Point(
                 x=-0.15, y=0.0, z=-0.10),
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
-        )
-        self.filter_center_offset_pose_approach = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
-        self.filter_dump_pose_approach = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
         )
         self.scoop_offset_pose_grasp = Pose(
             position=Point(
@@ -104,56 +68,34 @@ class CoffeeGrounds(Node):
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
         )
-        self.filter_center_offset_pose_grasp = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
-        self.filter_dump_pose_grasp = Pose(
-            position=Point(
-                x=0.1, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0)
-        )
 
         # define scooping poses (relative to coffee grounds april tag)
         self.scoop_pose_measure = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=-0.15, y=0.04, z=0.2),
             orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
+                x=1.0, y=0.0, z=0.0, w=1.0))
         self.scoop_pose_1 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=-0.15, y=-0.02, z=0.2),
             orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
+                x=1.0, y=0.0, z=0.0, w=1.0))
         self.scoop_pose_2 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=-0.15, y=0.04, z=0.1),
             orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
+                x=1.0, y=0.0, z=0.0, w=1.0))
         self.scoop_pose_3 = Pose(
             position=Point(
-                x=0.1, y=0.0, z=0.2),
+                x=-0.15, y=0.02, z=0.2),
             orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
+                x=-0.7071068, y=-0.0, z=0.0, w=0.7071068))
 
         # define dumping poses (relative to pot top)
-        self.dump_pose_1 = Pose(
+        self.dump_pose_approach = Pose(
             position=Point(
                 x=0.0, y=0.0, z=0.2),
             orientation=Quaternion())
-        self.dump_pose_2 = Pose(
-            position=Point(
-                x=0.0, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
-        self.dump_pose_3 = Pose(
-            position=Point(
-                x=0.0, y=0.0, z=0.2),
-            orientation=Quaternion(
-                x=0.0, y=0.0, z=0.0, w=1.0))
 
         # Initialize actual pickup positions
         self.scoop_actual_pickup_pose = Pose()
@@ -250,7 +192,7 @@ class CoffeeGrounds(Node):
         pot_tf = await self.tf_buffer.lookup_transform_async(
             "panda_link0", "pot_top", Time())
 
-        self.dump_pose_1.orientation = Quaternion(
+        self.dump_pose_approach.orientation = Quaternion(
             x=-0.6987058,
             y=0.0,
             z=-0.2329019,
@@ -258,7 +200,7 @@ class CoffeeGrounds(Node):
         )
 
         dump_pose = tf2_geometry_msgs.do_transform_pose(
-            self.dump_pose_1, pot_tf)
+            self.dump_pose_approach, pot_tf)
 
         # MOTION 1) Move to above the pot
         await self.moveit_api.plan_async(
@@ -378,29 +320,26 @@ class CoffeeGrounds(Node):
         scoop_pose_3 = tf2_geometry_msgs.do_transform_pose(
             self.scoop_pose_3, tf)
 
-        fut1 = self.moveit_api.plan(
+        await self.moveit_api.plan_async(
             point=scoop_pose_1.position,
             orientation=scoop_pose_1.orientation,
             execute=True,
             use_jc=True
         )
-        await fut1
 
-        fut2 = self.moveit_api.plan(
+        await self.moveit_api.plan_async(
             point=scoop_pose_2.position,
             orientation=scoop_pose_2.orientation,
             execute=True,
             use_jc=True
         )
-        await fut2
 
-        fut3 = self.moveit_api.plan(
+        await self.moveit_api.plan_async(
             point=scoop_pose_3.position,
             orientation=scoop_pose_3.orientation,
             execute=True,
             use_jc=True
         )
-        await fut3
 
     async def return_scoop(self):
         approach_pose = Pose(
