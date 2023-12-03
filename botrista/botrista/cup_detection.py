@@ -106,8 +106,8 @@ class CupDetection(Node):
             self.cup_tf.header.frame_id = "filtered_camera_localizer_tag"
             self.cup_tf.child_frame_id = "cup_location"
             self.cup_tf.transform.translation = Vector3(
-                x=self.cup_x,
-                y=-self.cup_y,
+                x=(-self.cup_x/2)+0.015,
+                y=(-self.cup_y)+0.045,
                 z=0.115)
             self.get_logger().info(str(self.cup_tf.transform.translation))
             self.depth_publisher.publish(
