@@ -60,7 +60,8 @@ class Pick_filter(Node):
             group_name=group_name,
             joint_state_topic="joint_states",
         )
-        self.grasp_planner = GraspPlanner(self.moveit_api, "panda_gripper/grasp")
+        self.grasp_planner = GraspPlanner(
+            self.moveit_api, "panda_gripper/grasp")
 
         # Creating action server
         self.pick_filter_client = ActionServer(
@@ -135,7 +136,8 @@ class Pick_filter(Node):
             self.get_logger().error("No transform found")
             return
 
-        observe_pose = tf2_geometry_msgs.do_transform_pose(self.observe_pose, tf)
+        observe_pose = tf2_geometry_msgs.do_transform_pose(
+            self.observe_pose, tf)
 
         refinement_pose = Pose(
             position=Point(x=0.0, y=0.0, z=-0.15), orientation=Quaternion()
@@ -281,7 +283,8 @@ class Pick_filter(Node):
         approach_pose = tf2_geometry_msgs.do_transform_pose(
             approach_pose, self.filter_pot_tf
         )
-        grasp_pose = tf2_geometry_msgs.do_transform_pose(grasp_pose, self.filter_pot_tf)
+        grasp_pose = tf2_geometry_msgs.do_transform_pose(
+            grasp_pose, self.filter_pot_tf)
         retreat_pose = tf2_geometry_msgs.do_transform_pose(
             retreat_pose, self.filter_pot_tf
         )

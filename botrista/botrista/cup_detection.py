@@ -259,8 +259,8 @@ class CupDetection(Node):
                         self.cv_bridge.cv2_to_imgmsg(self.cv_im))
                     self.state = State.CUP
 
-                if circles is None:
-                    self.get_logger().info("No Cup :(")
+                # if circles is None:
+                #     self.get_logger().info("No Cup :(")
         except Exception as e:
             self.get_logger().warn(f"Exception: {e}")
 

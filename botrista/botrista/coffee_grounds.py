@@ -207,7 +207,7 @@ class CoffeeGrounds(Node):
         if joint_states["panda_joint7"] > 0:
             x_offset = 0.02
         else:
-            x_offset = -0.05
+            x_offset = -0.055
 
         end_effector_tf = await self.buffer.lookup_transform_async(
             "panda_link0", "panda_hand_tcp", Time())
