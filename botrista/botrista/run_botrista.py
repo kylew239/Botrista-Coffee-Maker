@@ -5,7 +5,7 @@ from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 from geometry_msgs.msg import Pose, Point, Quaternion
-from std_srvs.srv import Empty
+from std_msgs.msg import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
@@ -79,6 +79,9 @@ class Botrista(Node):
         self.action_client_pick_filter_in_pot = ActionClient(
             self, EmptyAction, 'pick_filter_in_pot', callback_group=ReentrantCallbackGroup())
 
+        self.pour_pot_client = ActionClient(
+            self, EmptyAction, 'pour_pot', callback_group=ReentrantCallbackGroup())
+
         # start action server for making coffee routine
         self.make_coffee_action = ActionServer(
             self,
@@ -91,6 +94,9 @@ class Botrista(Node):
         self.delay_client = self.create_client(
             DelayTime, "delay", callback_group=ReentrantCallbackGroup())
 
+        self.start_coffee_subscriber = self.create_subscription(
+            Empty, "coffee_start", self.start_coffee_callback, 10, callback_group=ReentrantCallbackGroup())
+
         # move it api to home robot
         self.moveit_api = MoveItApi(self,
                                     "panda_link0",
@@ -99,7 +105,20 @@ class Botrista(Node):
                                     "joint_states",
                                     "panda")
 
+        self.has_started = False
+
+    async def start_coffee_callback(self, msg):
+        if not self.has_started:
+            self.get_logger().warn("Starting coffee routine")
+            self.has_started = True
+            await self.make_coffee()
+
     async def make_coffee_callback(self, goal_handle):
+        await self.make_coffee()
+        goal_handle.succeed()
+        return EmptyAction.Result()
+
+    async def make_coffee(self):
         # 1. Turns on Kettle (action)
         # 2. Pick up Filter from filter stand (pick_filter action)
         goal2 = EmptyAction.Goal()
@@ -116,26 +135,24 @@ class Botrista(Node):
         result = await self.action_client_scoop.send_goal_async(goal4)
         res = await result.get_result_async()
 
-        # 5. Wait for boiling
+        # # 5. Wait for boiling
         # 6. Pick up Kettle (pick_kettle action)
         goal6 = EmptyAction.Goal()
         result = await self.action_client_pick_kettle.send_goal_async(goal6)
         res = await result.get_result_async()
 
-        # 7. Pour water from kettle (pour_action action)
+        # # 7. Pour water from kettle (pour_action action)
         goal7 = EmptyAction.Goal()
         result = await self.action_client_pour_kettle.send_goal_async(goal7)
         res = await result.get_result_async()
-
-        goal7 = EmptyAction.Goal()
-        result = await self.action_client_pour_kettle.send_goal_async(goal7)
-        res = await result.get_result_async()
+        self.get_logger().warn(f"Finished 7")
 
         # 8. Place Kettle on kettle stand (place_kettle action)
         goal8 = EmptyAction.Goal()
         result = await self.action_client_place_kettle.send_goal_async(goal8)
         res = await result.get_result_async()
         await self.moveit_api.go_home()
+        self.get_logger().warn(f"Finished 8")
         await self.delay_client.call_async(DelayTime.Request(time=10.0))
 
         # 9. Wait for coffee grounds to soak
@@ -143,6 +160,7 @@ class Botrista(Node):
         goal10 = EmptyAction.Goal()
         result = await self.action_client_pick_filter_in_pot.send_goal_async(goal10)
         res = await result.get_result_async()
+        self.get_logger().warn(f"Finished 10")
 
         # 11. Place Filter on filter stand (place_filter action)
         goal11 = EmptyAction.Goal()
@@ -157,15 +175,16 @@ class Botrista(Node):
         res = await result.get_result_async()
 
         # 13. Pour Coffee (pour_action action)
+        goal13 = EmptyAction.Goal()
+        result = await self.pour_pot_client.send_goal_async(goal13)
+        res = await result.get_result_async()
+
         # 14. Put Pot on pot stand (place_pot action)
         goal14 = EmptyAction.Goal()
-        result = await self.action_client_pick_filter_in_pot.send_goal_async(goal14)
+        result = await self.action_client_place_pot.send_goal_async(goal14)
         res = await result.get_result_async()
 
         await self.moveit_api.go_home()
-
-        goal_handle.succeed()
-        return EmptyAction.Result()
 
 
 def botrista_entry(args=None):

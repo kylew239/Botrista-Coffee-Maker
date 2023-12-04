@@ -141,7 +141,7 @@ class Kettle(Node):
         )
 
         grasp_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=-0.04),
+            position=Point(x=0.0, y=0.0, z=-0.02),
             orientation=Quaternion()
         )
 
@@ -170,7 +170,6 @@ class Kettle(Node):
         )
 
         await self.grasp_planner.execute_grasp_plan(grasp_plan)
-
         goal_handle.succeed()
         return EmptyAction.Result()
 
@@ -200,7 +199,7 @@ class Kettle(Node):
         )
 
         pour_pose = Pose(
-            position=Point(x=0.01, y=0.005, z=0.17),
+            position=Point(x=0.01, y=-0.005, z=0.17),
             orientation=Quaternion(
                 x=0.9452608, y=0.0, z=-0.3150869, w=-0.0848662)
         )
@@ -224,7 +223,7 @@ class Kettle(Node):
         #     approach_pose, pot_top_tf)
         # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
 
-        ## Pour 1
+        # Pour 1
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
@@ -253,9 +252,9 @@ class Kettle(Node):
             orientation=approach_pose.orientation,
             execute=True
         )
-        self.delay_client.call_async(Empty)
+        await self.delay_client.call_async(DelayTime.Request(time=1.0))
 
-        ## Pour 2
+        # Pour 2
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
@@ -284,10 +283,9 @@ class Kettle(Node):
             orientation=approach_pose.orientation,
             execute=True
         )
-        self.delay_client.call_async(Empty)
+        await self.delay_client.call_async(DelayTime.Request(time=1.0))
 
-
-        ## Pour 3
+        # Pour 3
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
@@ -316,11 +314,9 @@ class Kettle(Node):
             orientation=approach_pose.orientation,
             execute=True
         )
-        self.delay_client.call_async(Empty)
-        
-    
+        await self.delay_client.call_async(DelayTime.Request(time=1.0))
 
-        ## Pour 4
+        # Pour 4
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
@@ -349,7 +345,7 @@ class Kettle(Node):
             orientation=approach_pose.orientation,
             execute=True
         )
-        
+
         goal_handle.succeed()
         return EmptyAction.Result()
 

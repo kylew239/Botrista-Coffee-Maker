@@ -28,11 +28,13 @@ from botrista_interfaces.action import GraspProcess
 from rclpy.time import Time
 from moveit_wrapper.grasp_planner import GraspPlanner, GraspPlan
 
+
 class CoffeeGrounds(Node):
     """
     Measures coffee depth, scoops coffee, and dumps coffee in coffee maker.
     Also dumps used coffee grounds from filter.
     """
+
     def __init__(self):
         """
         Description:
@@ -68,7 +70,7 @@ class CoffeeGrounds(Node):
         )
         self.scoop_offset_pose_retreat = Pose(
             position=Point(
-                x=0.1, y=0.0, z=-0.2),
+                x=0.1, y=0.0, z=-0.3),
             orientation=Quaternion(
                 x=0.5, y=0.5, z=0.5, w=0.5)
         )
@@ -81,12 +83,12 @@ class CoffeeGrounds(Node):
                 x=1.0, y=0.0, z=0.0, w=1.0))
         self.scoop_pose_1 = Pose(
             position=Point(
-                x=-0.15, y=-0.02, z=0.2),
+                x=-0.20, y=0.0, z=0.2),
             orientation=Quaternion(
-                x=1.0, y=0.0, z=0.0, w=1.0))
+                x=0.7071068, y=0.7071068, z=0.0, w=0.0))
         self.scoop_pose_2 = Pose(
             position=Point(
-                x=-0.15, y=0.04, z=0.1),
+                x=-0.15, y=0.04, z=0.2),
             orientation=Quaternion(
                 x=1.0, y=0.0, z=0.0, w=1.0))
         self.scoop_pose_3 = Pose(
@@ -121,8 +123,8 @@ class CoffeeGrounds(Node):
         self.grasp_process = ActionClient(self, GraspProcess, 'grasp_process')
 
         # Create tf listener
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.buffer = Buffer()
+        self.tf_listener = TransformListener(self.buffer, self)
         self.tf_parent_frame = "panda_link0"
 
         # Moveit Wrapper Object
@@ -142,7 +144,7 @@ class CoffeeGrounds(Node):
             Action callback for the scooping routine, scoops coffee and dumps it in the filter
         """
         await self.grab_scoop()
-        await self.scoop_grounds()
+        # await self.scoop_grounds()
         await self.move_to_pot()
 
         # Go home
@@ -151,7 +153,6 @@ class CoffeeGrounds(Node):
 
         goal_handle.succeed()
         return EmptyAction.Result()
-
 
     async def move_to_pot(self):
         """
@@ -163,19 +164,26 @@ class CoffeeGrounds(Node):
         path_constraints = self.moveit_api.create_path_constraints(
             current_pose.pose.orientation,
             y_tol=2 * np.pi,
-            x_tol=np.pi / 8,
-            z_tol=np.pi / 8,
+            x_tol=np.pi / 12,
+            z_tol=np.pi / 12,
         )
 
         # Get the pot top pose
-        pot_tf = await self.tf_buffer.lookup_transform_async(
+        pot_tf = await self.buffer.lookup_transform_async(
             "panda_link0", "pot_top", Time())
 
+        # self.dump_pose_approach.orientation = Quaternion(
+        #     x=-0.6987058,
+        #     y=0.0,
+        #     z=-0.2329019,
+        #     w=0.6764369
+        # )
+
         self.dump_pose_approach.orientation = Quaternion(
-            x=-0.6987058,
+            x=-0.819152,
             y=0.0,
-            z=-0.2329019,
-            w=0.6764369
+            z=0.0,
+            w=0.5735764
         )
 
         dump_pose = tf2_geometry_msgs.do_transform_pose(
@@ -188,20 +196,20 @@ class CoffeeGrounds(Node):
             path_constraints=path_constraints,
             use_jc=False,
             execute=True,
-            y_tol=np.pi / 6,
-            x_tol=np.pi / 8,
-            z_tol=np.pi / 8,
+            y_tol=np.pi / 16,
+            x_tol=np.pi / 16,
+            z_tol=np.pi / 16,
         )
 
         # have the end effector retreat from the center a bit
         joint_states = self.moveit_api.get_current_joint_state()
 
         if joint_states["panda_joint7"] > 0:
-            x_offset = 0.04
+            x_offset = 0.02
         else:
-            x_offset = -0.06
+            x_offset = -0.05
 
-        end_effector_tf = await self.tf_buffer.lookup_transform_async(
+        end_effector_tf = await self.buffer.lookup_transform_async(
             "panda_link0", "panda_hand_tcp", Time())
         retreat = Pose(
             position=Point(x=x_offset, y=0.05, z=-0.09),
@@ -243,7 +251,7 @@ class CoffeeGrounds(Node):
 
         # MOTION 5) Retreat from pot
         above_pose = Pose(
-            position=Point(x=0.0, y=0.0, z=0.15),
+            position=Point(x=0.0, y=0.0, z=0.35),
             orientation=Quaternion()
         )
         above_pose = tf2_geometry_msgs.do_transform_pose(
@@ -254,14 +262,13 @@ class CoffeeGrounds(Node):
             execute=True,
         )
 
-
     async def grab_scoop(self):
         """
         Description:
             Function to pick up the coffee scoop
         """
         try:
-            tf = self.tf_buffer.lookup_transform(
+            tf = self.buffer.lookup_transform(
                 "panda_link0", "filtered_coffee_scoop", Time(seconds=0.0))
 
         except Exception as e:
@@ -289,17 +296,17 @@ class CoffeeGrounds(Node):
         res = await goal.get_result_async()
         self.scoop_actual_pickup_pose = res.result.actual_grasp_pose
 
-
     async def scoop_grounds(self):
         """
         Description:
             Function to scoop coffee grounds from the coffee pot
         """
         tf = self.buffer.lookup_transform(
-            "filtered_grounds_tag", "panda_link0", Time())
-
+            "panda_link0", "filtered_coffee_grounds", Time())
+        await self.moveit_api.go_home()
         scoop_pose_1 = tf2_geometry_msgs.do_transform_pose(
             self.scoop_pose_1, tf)
+        self.get_logger().warn(f"MADE SCOOP POSE 1: {scoop_pose_1}")
         scoop_pose_2 = tf2_geometry_msgs.do_transform_pose(
             self.scoop_pose_2, tf)
         scoop_pose_3 = tf2_geometry_msgs.do_transform_pose(
@@ -307,9 +314,9 @@ class CoffeeGrounds(Node):
 
         await self.moveit_api.plan_async(
             point=scoop_pose_1.position,
-            orientation=scoop_pose_1.orientation,
+            # orientation=scoop_pose_1.orientation,
             execute=True,
-            use_jc=True
+            use_jc=False
         )
 
         await self.moveit_api.plan_async(
@@ -325,7 +332,6 @@ class CoffeeGrounds(Node):
             execute=True,
             use_jc=True
         )
-
 
     async def return_scoop(self):
         """

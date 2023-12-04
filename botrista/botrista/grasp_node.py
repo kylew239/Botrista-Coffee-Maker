@@ -46,7 +46,7 @@ class GraspNode(Node):
 
         self.payloads = {
             0: None,  # None
-            1: (2.0, [0.05, 0.0, 0.10]),  # Kettle
+            1: (1.8, [0.05, 0.0, 0.10]),  # Kettle
         }
 
     async def grasp_process(self, goal_handle):
