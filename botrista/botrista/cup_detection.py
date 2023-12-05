@@ -15,11 +15,13 @@ Subscriptions
 -------------
   + image_rect_color (sensor_msgs/Image) - images published by the d435 camera.
   + camera_info (sensor_msgs/CameraInfo) - intrinsic info about the d435 camera.
-  + start_coffee (std_msgs/Empty) - intrinsic info about the d435 camera.
+  + restart_coffee (std_msgs/Empty) - resets the state machine to look for the cup to
+    start coffee making process again
 
 Publishes
 ---------
   + cup_image (sensor_msgs/Image) - image after processing showing the cup location.
+  + coffee_start (std_msgs/Empty) - sends a message to the topic to start making coffee.
 
 Client
 ------
@@ -35,7 +37,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 from rcl_interfaces.msg import ParameterDescriptor
 from tf2_ros import Buffer, TransformListener, TransformBroadcaster
-from geometry_msgs.msg import TransformStamped, Vector3, Quaternion
+from geometry_msgs.msg import TransformStamped, Vector3
 from rclpy.callback_groups import ReentrantCallbackGroup
 from std_msgs.msg import Empty
 from botrista_interfaces.srv import DelayTime
@@ -45,6 +47,13 @@ from image_geometry.cameramodels import PinholeCameraModel
 
 
 class State(Enum):
+    """
+    State machine for the cup dectection.
+
+    Once the cup is detected it should just publish a tf until it is reset.
+
+    """
+
     START = auto()
     STOPPED = auto()
     CUP = auto()
@@ -52,8 +61,10 @@ class State(Enum):
 
 class CupDetection(Node):
     """
-    Detects the whether the cup is in location and begins the
-    coffee making process.
+    Detects the whether there is a cup and its location.
+
+    Begins the coffee making process.
+
     """
 
     def __init__(self):
@@ -76,12 +87,10 @@ class CupDetection(Node):
             ),
         )
         self.lower_m = (
-            self.get_parameter(
-                "lower_mask").get_parameter_value().integer_array_value
+            self.get_parameter("lower_mask").get_parameter_value().integer_array_value
         )
         self.upper_m = (
-            self.get_parameter(
-                "upper_mask").get_parameter_value().integer_array_value
+            self.get_parameter("upper_mask").get_parameter_value().integer_array_value
         )
 
         # Initializing variables
@@ -132,8 +141,10 @@ class CupDetection(Node):
 
     async def timer_callback(self):
         """
-        Checks the state of the node and publishes 
-        the cup_location tf.
+        Check the state of the node.
+
+        Publishes the cup_location tf.
+
         """
         if self.state == State.STOPPED:
             await self.delay_client.call_async(DelayTime.Request(time=5.0))
@@ -144,46 +155,44 @@ class CupDetection(Node):
             self.cup_tf.child_frame_id = "cup_location"
             # Converting the pixel of the center to a TF
             self.cup_tf.transform.translation = Vector3(
-                x=(-self.cup_x/2)+0.015,
-                y=(-self.cup_y)+0.045,
-                z=0.115)
-            # self.get_logger().info(str(self.cup_tf.transform.translation))
-            self.depth_publisher.publish(
-                self.cv_bridge.cv2_to_imgmsg(self.cv_im))
+                x=(-self.cup_x / 2) + 0.015, y=(-self.cup_y) + 0.045, z=0.115
+            )
+            self.depth_publisher.publish(self.cv_bridge.cv2_to_imgmsg(self.cv_im))
             self.transform_broadcaster.sendTransform(self.cup_tf)
             self.coffee_publisher.publish(Empty())
 
     def start_callback(self, msg: Empty):
         """
-        Starts the coffee making process.
+        Start the coffee making process.
 
         Keyword Arguments:
             msg (geometry_msgs/Empty)-- Empty message to start the state.
 
         Returns
         -------
-            Empty return    
+            Empty return
 
         """
         self.state = State.START
 
     def cam_info_callback(self, cam_info: CameraInfo):
         """
-        Sets the camera info.
+        Set the camera info.
 
         Keyword Arguments:
             cam_info (sensor_msgs/CameraInfo)-- Intrinsic points of the camera.
 
         Returns
         -------
-            Empty return    
+            Empty return
 
         """
         self.cam.fromCameraInfo(cam_info)
 
     def img_callback(self, Image):
         """
-        Processes the image and gets the pixel to tf of the center of the cup.
+        Process the image and gets the pixel to tf of the center of the cup.
+
         Once the tf is found, changes state.
 
         Keyword Arguments:
@@ -191,7 +200,7 @@ class CupDetection(Node):
 
         Returns
         -------
-            Empty return    
+            Empty return
 
         """
         try:
@@ -243,24 +252,33 @@ class CupDetection(Node):
                 if circles is not None:
                     # Looking for the largest circle which is the cup.
                     circles = np.uint16(np.around(circles))
-                    circles2 = sorted(
-                        circles[0], key=lambda x: x[2], reverse=True)
+                    circles2 = sorted(circles[0], key=lambda x: x[2], reverse=True)
                     self.get_logger().info("Cup!")
                     i = circles2[0]
                     # Saving the center of the circle and publishing an image with the center
                     (self.cup_x, self.cup_y, self.cup_z) = self.cam.projectPixelTo3dRay(
-                        (i[0]+(pixel_tf[0]-100),
-                         i[1]+(pixel_tf[1]-350)))
-                    cv2.circle(self.cv_im, (i[0]+(pixel_tf[0]-100),
-                                            i[1]+(pixel_tf[1]-350)), 7, (0, 0, 255), -1)
-                    cv2.circle(self.cv_im, (i[0]+(pixel_tf[0]-100),
-                                            i[1]+(pixel_tf[1]-350)), i[2], (0, 255, 0), 2)
+                        (i[0] + (pixel_tf[0] - 100), i[1] + (pixel_tf[1] - 350))
+                    )
+                    cv2.circle(
+                        self.cv_im,
+                        (i[0] + (pixel_tf[0] - 100), i[1] + (pixel_tf[1] - 350)),
+                        7,
+                        (0, 0, 255),
+                        -1,
+                    )
+                    cv2.circle(
+                        self.cv_im,
+                        (i[0] + (pixel_tf[0] - 100), i[1] + (pixel_tf[1] - 350)),
+                        i[2],
+                        (0, 255, 0),
+                        2,
+                    )
                     self.depth_publisher.publish(
-                        self.cv_bridge.cv2_to_imgmsg(self.cv_im))
+                        self.cv_bridge.cv2_to_imgmsg(self.cv_im)
+                    )
                     self.state = State.CUP
-
-                # if circles is None:
-                #     self.get_logger().info("No Cup :(")
+                if circles is None:
+                    pass
         except Exception as e:
             self.get_logger().warn(f"Exception: {e}")
 
