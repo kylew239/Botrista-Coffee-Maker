@@ -1,3 +1,15 @@
+""" 
+A node that handles camera localization and tag filtering.
+
+Publishes Transforms:
+--------------------
+    + d405_link (geometry_msgs/TransformStamped) - The tf from the d405 camera to the robot.
+    + filtered_camera_localizer_tag (geometry_msgs/TransformStamped) - The filtered tf of the camera localizer tag.
+    + filtered_kettle_tag (geometry_msgs/TransformStamped) - The filtered tf of the kettle tag.
+    + filtered_filter_tag (geometry_msgs/TransformStamped) - The filtered tf of the filter tag.
+    + filtered_pour_over_tag (geometry_msgs/TransformStamped) - The filtered tf of the pour over tag.
+    + filtered_coffee_scoop (geometry_msgs/TransformStamped) - The filtered tf of the coffee scoop tag.
+"""
 from rclpy.node import Node
 import rclpy
 from rclpy.time import Time
@@ -10,9 +22,7 @@ from rclpy.clock import Clock
 
 
 class CameraLocalizer(Node):
-    """
-    Handles Localizing both the d435i ceiling camera and the d405 robot camera.
-    """
+    """A node that handles camera localization and tag filtering."""
 
     def __init__(self):
         super().__init__('camera_localizer')
@@ -29,7 +39,7 @@ class CameraLocalizer(Node):
 
         # the tags to filter
         self.tags = ['camera_localizer_tag', 'kettle_tag',
-                     'filter_tag', 'pour_over_tag', 'coffee_grounds', 'coffee_scoop']
+                     'filter_tag', 'pour_over_tag', 'coffee_scoop']
 
         # create the filter objects for each tag
         self.filters = [FilterTag(self.transform_broadcaster,
@@ -45,10 +55,7 @@ class CameraLocalizer(Node):
                                        predict_up=True) for tag in self.tags[1:]])
 
     async def timer_callback(self):
-        """
-        Publish the transform for the d405 and filter each tag..
-        """
-
+        """Publish the transform for the d405 and filter each tag."""
         # publish d405 transform to the franka hand
         self.transform_broadcaster.sendTransform(
             TransformStamped(
@@ -108,10 +115,7 @@ class CameraLocalizer(Node):
 
 
 class FilterTag:
-    """
-    Handles filtering the position of a tag using a Kalman filter
-    and publishing the filtered transform.
-    """
+    """Handles filtering the position of a tag using a Kalman filter."""
 
     def __init__(self,
                  tf_broadcaster,
@@ -121,13 +125,17 @@ class FilterTag:
                  source_frame,
                  predict_up=False):
         """
+        Initialize the filter.
+
         Arguments:
-            + tf_broadcaster (TransformBroadcaster): The Tf broadcaster to use/
+        ---------
+            + tf_broadcaster (TransformBroadcaster): The Tf broadcaster to use.
             + tf_buffer (Buffer): The Tf buffer to use.
             + clock (Clock): The clock to use.
             + target_frame (str): The target frame to publish the filtered transform to.
             + source_frame (str): The source frame to filter.
             + predict_up (bool): Whether or not to predict the tag facing directly up.
+
         """
         self.mean = None
         self.sigma = np.identity(7) * 5.0
@@ -139,10 +147,7 @@ class FilterTag:
         self.predict_up = predict_up
 
     def filter(self):
-        """
-        Run the filter and publish the filtered transform.
-        """
-
+        """Run the filter and publish the filtered transform."""
         now = self.clock.now()
         s, _ = now.seconds_nanoseconds()
         try:
@@ -183,7 +188,8 @@ class FilterTag:
 
         Returns
         -------
-            A tuple of the (mean_t, sigma_t)
+            A tuple of the (mean_t, sigma_t).s
+
         """
         # for the state transition it shouldn't move
         A = np.identity(7)
@@ -216,6 +222,17 @@ class FilterTag:
         return u_t, sigma_t
 
     def tf_to_vec(self, tf: TransformStamped):
+        """
+        Convert the TF to a measurement vector.
+
+        Arguments:
+            + tf (TransformStamped): The transform to convert.
+
+        Returns
+        -------    
+            a 7 length column vector of the transform.
+
+        """
         return np.array([[
             tf.transform.translation.x,
             tf.transform.translation.y,
@@ -227,6 +244,17 @@ class FilterTag:
         ]]).T
 
     def vec_to_tf(self, vec):
+        """
+        Undo the vec_to_tf conversion.
+
+        Arguments:
+            + vec (np.array): 7 length column vector of the transform.
+
+        Returns
+        -------
+            The Tf transform.
+
+        """
         tf = Transform()
         vec = vec.flatten().ravel()
         tf.translation.x = vec[0]
