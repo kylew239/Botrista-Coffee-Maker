@@ -6,7 +6,7 @@ and controls the gripper as well.
 
 SERVICES:
   + pick_filter (botrista_interfaces/action/Emptyaction) - pick up filter
-  + place_filter (botrista_interfaces/action/Emptyaction) - place the filter back to the filter stand
+  + place_filter (botrista_interfaces/action/Emptyaction) - place filter back to the filter stand
   + place_filter_in_pot (botrista_interfaces/action/Emptyaction) - place the filter on pot
   + pick_filter_in_pot (botrista_interfaces/action/Emptyaction) - pick up the filter from the pot
 
@@ -30,7 +30,6 @@ from geometry_msgs.msg import Point, Quaternion, Pose, TransformStamped
 from rclpy.action import ActionServer, ActionClient
 from botrista_interfaces.action import EmptyAction, GraspProcess
 from botrista_interfaces.srv import DelayTime
-from std_srvs.srv import Empty
 import tf2_geometry_msgs
 from franka_msgs.action import Grasp
 
@@ -132,7 +131,7 @@ class Pick_filter(Node):
                 "panda_link0", "filtered_filter_tag", Time()
             )
 
-        except Exception as e:
+        except Exception:
             self.get_logger().error("No transform found")
             return
 
@@ -220,7 +219,7 @@ class Pick_filter(Node):
         """
         try:
             tf = self.buffer.lookup_transform("panda_link0", "pot_top", Time())
-        except Exception as e:
+        except Exception:
             self.get_logger().error("No transform found")
             return
 
