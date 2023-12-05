@@ -235,8 +235,12 @@ class CoffeeGrounds(Node):
 
         if joint_states["panda_joint7"] > 0:
             joint_states["panda_joint7"] -= np.pi
+            joint_states["panda_joint7"] = max(
+                joint_states["panda_joint7"], -150.0 * np.pi / 180.0)
         else:
             joint_states["panda_joint7"] += np.pi
+            joint_states["panda_joint7"] = min(
+                joint_states["panda_joint7"], 150.0 * np.pi / 180.0)
 
         names = list(joint_states.keys())
         pos = list(joint_states.values())

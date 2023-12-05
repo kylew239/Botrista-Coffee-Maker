@@ -242,11 +242,9 @@ class Pot(Node):
 
         # rotate handle
         joint_states = self.moveit_api.get_current_joint_state()
-
-        if joint_states["panda_joint7"] > 0:
-            joint_states["panda_joint7"] -= np.pi
-        else:
-            joint_states["panda_joint7"] += np.pi
+        joint_states["panda_joint7"] += np.pi
+        joint_states["panda_joint7"] = min(
+            joint_states["panda_joint7"], 150.0 * np.pi / 180.0)
 
         names = list(joint_states.keys())
         pos = list(joint_states.values())
