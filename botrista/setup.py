@@ -30,8 +30,6 @@ setup(
             'cup_detection = botrista.cup_detection:cup_detection_entry',
             'delay_node = botrista.delay_node:delay_entry',
             'handle_detector = botrista.handle_detector:handle_detector_entry',
-            'filter_test = botrista.filter_test:main',
-            'filter_grasp = botrista.filter_grasp:main',
             'pick_filter = botrista.pick_filter:main',
             'grasp_node = botrista.grasp_node:main',
             'pot_node = botrista.pot:pot_entry',
