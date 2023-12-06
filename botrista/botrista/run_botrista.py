@@ -1,4 +1,4 @@
-"""Manges the main make_coffee action and routine.
+"""Mangaes the main make_coffee action and routine.
 
 Coffee routine is as follows:
 1. Waits to detect an empty cup placed in the detection area (coffee_start subscriber)
@@ -38,6 +38,8 @@ Action Clients:
 Action Servers:
   make_coffee (EmptyAction) - The routine to make a cup of coffee
 """
+
+
 import rclpy
 from rclpy.node import Node
 from moveit_wrapper.moveitapi import MoveItApi

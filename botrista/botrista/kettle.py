@@ -1,3 +1,22 @@
+"""
+Node for kettle management.
+
+Uses the wrapper class made in moveitapi. 
+
+Service Clients:
+  + delay (botrista_interfaces/DelayTime) - Delay timer
+
+Action Servers:
+  + pick_kettle (botrista_interfaces/Emptyaction) - pick up the kettle
+  + place_kettle (botrista_interfaces/Emptyaction) - place the kettle
+  + pour_kettle (botrista_interfaces/Emptyaction) - pour water from the kettle
+
+Action Clients:
+  + pour_action (botrista_interfaces/PourAction) - Action for pouring in a spiral motion
+  + grasp_process (botrista_interfaces/GraspProcess) - Action for detectinig and grasping an object
+"""
+
+
 import rclpy
 from rclpy.node import Node
 import tf2_geometry_msgs
@@ -5,18 +24,15 @@ from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.moveitapi import MoveItApi
 from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
 from geometry_msgs.msg import Pose, Point, Quaternion, TransformStamped, Transform, Vector3
-from std_srvs.srv import Empty
 from std_msgs.msg import Header
 from rclpy.callback_groups import ReentrantCallbackGroup
 from franka_msgs.action import Grasp
 from rclpy.time import Time
 from franka_msgs.msg import GraspEpsilon
 from rclpy.callback_groups import ReentrantCallbackGroup
-from time import sleep
 from botrista_interfaces.action import EmptyAction, GraspProcess, PourAction
 from rclpy.action import ActionServer, ActionClient
 from botrista_interfaces.srv import DelayTime
-from shape_msgs.msg import SolidPrimitive
 import numpy as np
 
 
@@ -81,9 +97,7 @@ class Kettle(Node):
             orientation=Quaternion())
 
     async def pick_kettle_cb(self, goal_handle):
-        """
-        Grabs the kettle from its stand.
-        """
+        """Grab the kettle from its stand."""
         # home the panda
         await self.moveit_api.plan_joint_async(
             ["panda_joint1", "panda_joint2", "panda_joint3",
@@ -127,14 +141,11 @@ class Kettle(Node):
         goal = await self.grasp_process.send_goal_async(goal_msg)
         res = await goal.get_result_async()
         self.kettle_actual_place = res.result.actual_grasp_pose
-        # self.create_kettle_attached_object()
         goal_handle.succeed()
         return EmptyAction.Result()
 
     async def place_kettle_cb(self, goal_handle):
-        """
-        Places the kettle on its stand.
-        """
+        """Place the kettle on its stand."""
         approach_pose = Pose(
             position=Point(x=0.0, y=0.0, z=-0.1),
             orientation=Quaternion()
@@ -174,6 +185,15 @@ class Kettle(Node):
         return EmptyAction.Result()
 
     async def pour_kettle_cb(self, goal_handle):
+        """
+        Pour the kettle using the spiral pour.
+
+        Args:
+            goal_handle (EmptyAction.Goal) -- goal of the pour action
+
+        Returns:
+            EmptyAction.Result -- Result of the action
+        """
         try:
             pot_top_tf = self.buffer.lookup_transform(
                 "panda_link0", "pot_top", Time())
@@ -213,16 +233,6 @@ class Kettle(Node):
             approach_pose, pot_top_tf)
         pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
 
-        # TODO: Delete
-        # transform to world
-        # approach_pose = tf2_geometry_msgs.do_transform_pose(
-        #     approach_pose, pot_top_tf)
-        # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
-        # # transform to world
-        # approach_pose = tf2_geometry_msgs.do_transform_pose(
-        #     approach_pose, pot_top_tf)
-        # pour_pose = tf2_geometry_msgs.do_transform_pose(pour_pose, pot_top_tf)
-
         # Pour 1
         result = await self.moveit_api.plan_async(
             point=approach_pose.position,
@@ -241,7 +251,6 @@ class Kettle(Node):
             spiral_radius=0.02,
             num_loops=2.0,
             start_outside=True,
-            y_offset=0.0,
             pour_frame="panda_hand_tcp",
         )
         result = await self.pour_kettle.send_goal_async(goal_msg)
@@ -272,7 +281,6 @@ class Kettle(Node):
             spiral_radius=0.02,
             num_loops=2.0,
             start_outside=False,
-            y_offset=0.0,
             pour_frame="panda_hand_tcp",
         )
         result = await self.pour_kettle.send_goal_async(goal_msg)
@@ -303,7 +311,6 @@ class Kettle(Node):
             spiral_radius=0.02,
             num_loops=2.0,
             start_outside=False,
-            y_offset=0.0,
             pour_frame="panda_hand_tcp",
         )
         result = await self.pour_kettle.send_goal_async(goal_msg)
@@ -334,7 +341,6 @@ class Kettle(Node):
             spiral_radius=0.02,
             num_loops=2.0,
             start_outside=False,
-            y_offset=0.0,
             pour_frame="panda_hand_tcp",
         )
         result = await self.pour_kettle.send_goal_async(goal_msg)
@@ -348,22 +354,6 @@ class Kettle(Node):
 
         goal_handle.succeed()
         return EmptyAction.Result()
-
-    async def create_kettle_attached_object(self):
-        pose = Pose(
-            position=Point(x=0.23, y=0.0, z=0.02),
-            orientation=Quaternion(x=1.0, y=0.0, z=0.0, w=0.0)
-        )
-        primitive = SolidPrimitive(
-            type=SolidPrimitive.SPHERE,
-            dimensions=[0.01]
-        )
-        self.moveit_api.createAttachObject(
-            "spout", [pose], [primitive]
-        )
-
-        await self.moveit_api.attachObjectToEE("spout")
-        self.moveit_api.set_ee_frame("spout/spout")
 
 
 def kettle_entry(args=None):

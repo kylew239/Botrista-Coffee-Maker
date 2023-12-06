@@ -1,8 +1,15 @@
+"""
+Performs the spiral pouring action.
+
+Action Servers:
+  + pour_action (botrista_interfaces/PourAction) - Action for pouring in a spiral motion
+
+"""
+
+
 import rclpy
 from rclpy.node import Node
 import math
-import numpy as np
-import time
 from rclpy.callback_groups import ReentrantCallbackGroup
 from tf2_ros import TransformException
 from tf2_ros.transform_listener import TransformListener
@@ -10,27 +17,19 @@ from tf2_ros.buffer import Buffer
 
 # Object Importing
 from moveit_wrapper.moveitapi import MoveItApi
-from geometry_msgs.msg import Vector3, Point, Quaternion, Pose, TransformStamped
-from shape_msgs.msg import SolidPrimitive
-from rcl_interfaces.msg import ParameterDescriptor
+from geometry_msgs.msg import Point, Quaternion, Pose
 from rclpy.action import ActionServer
 from botrista_interfaces.action import PourAction
-from std_srvs.srv import Empty
 
 
 class Pouring(Node):
+    """Perform the spiral pouring action."""
+
     def __init__(self):
         super().__init__(node_name="pouring")
         self.path = None
         self.cb = ReentrantCallbackGroup()
         self.get_logger().warn("Pouring started")
-
-        # Creating Parameters
-        self.declare_parameter("pour_begin_offset", 0.15,
-                               ParameterDescriptor(
-                                   description="Z distance to move to before pouring"))
-        self.pour_height_offset = self.get_parameter("pour_begin_offset")\
-            .get_parameter_value().double_value
 
         # Creating tf listener
         self.tf_buffer = Buffer()
@@ -53,11 +52,18 @@ class Pouring(Node):
                                            callback_group=self.cb)
 
     async def pour_callback(self, goal_handle):
+        """
+        Perform the spiral pour action.
+
+        Args:
+            goal_handle (PourAction.Goal) -- goal of the pour action
+
+        Returns:
+            PourAction.Result -- Result of the action
+        """
         result = PourAction.Result()
         feedback = PourAction.Feedback()
         req = goal_handle.request
-
-        offset = req.y_offset
 
         # Attempt to get point from frame
         try:
@@ -118,18 +124,15 @@ def get_spiral_waypoints(startPoint: Point,
     """
     Create a spiral path given parameters
 
-    Arguments:
+    Args:
         startPoint (geometry_msgs/Point) -- Starting point
         startOre (geometry_msgs/Quaternion) -- Starting Orientation
         numPoints (int) -- number of points used to build the path
         maxRadius (float) -- distance from end of spiral to origin in cm
         loops (float) -- number of loops for the spiral to go through
-
-    Keyword Arguments:
         flipStart (bool) -- Start at the end of the spiral instead of the center (default: {False})
 
-    Returns
-    -------
+    Returns:
         A list of waypoints
 
     """

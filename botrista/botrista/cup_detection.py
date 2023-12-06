@@ -19,7 +19,7 @@ Client:
   + delay (botrista_interfaces/DelayTime): timer for delay in seconds.
 
 Transforms:
-    + cup_location (geometry_msgs/TransformStamped): the transform to the cup top.
+  + cup_location (geometry_msgs/TransformStamped): the transform to the cup top.
 
 """
 

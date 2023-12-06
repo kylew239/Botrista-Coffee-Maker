@@ -5,7 +5,6 @@ bool start_outside
 float64 num_loops
 string pour_frame
 geometry_msgs/Quaternion tilt_ang
-float64 y_offset
 ---
 # Result
 bool status
