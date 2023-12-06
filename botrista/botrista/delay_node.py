@@ -13,11 +13,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 class Delay_Node(Node):
     def __init__(self):
-        """
-        Description:
-            Initializes the delay_node
-
-        """
+        """Initialize the delay_node."""
         super().__init__("delay_node")
         self.delay_timer = self.create_service(
             DelayTime, "delay", self.delay_callback, callback_group=ReentrantCallbackGroup())
