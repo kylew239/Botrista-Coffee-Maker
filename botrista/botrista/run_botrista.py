@@ -2,43 +2,35 @@
 Manages the scoop action, which picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
 
 Subscriptions:
-  + coffee_start (Empty) - 
+  + coffee_start (Empty) - to start the entire progress
 
 Service Clients:
-  + delay (DelayTime) - 
+  + delay (DelayTime) - timer for delay in seconds.
 
 Action Clients:
-  + pick_kettle (EmptyAction) - 
-  + place_kettle (EmptyAction) - 
-  + pick_pot (EmptyAction) - 
-  + place_pot (EmptyAction) - 
-  + pour_kettle (EmptyAction) - 
-  + scoop (EmptyAction) - 
-  + pick_filter (EmptyAction) - 
-  + place_filter (EmptyAction) - 
-  + place_filter_in_pot (EmptyAction) - 
-  + pick_filter_in_pot (EmptyAction) - 
-  + pour_pot (EmptyAction) - 
+  + pick_kettle (EmptyAction) - pick up kettle
+  + place_kettle (EmptyAction) - place kettle
+  + pick_pot (EmptyAction) - pick up pot
+  + place_pot (EmptyAction) - place pot
+  + pour_kettle (EmptyAction) - pour water into the pot
+  + scoop (EmptyAction) - The scooping routine
+  + pick_filter (EmptyAction) - pick up filter
+  + place_filter (EmptyAction) - place filter back to the filter stand
+  + place_filter_in_pot (EmptyAction) - place the filter on pot
+  + pick_filter_in_pot (EmptyAction) - pick up the filter from the pot
+  + pour_pot (EmptyAction) - pour coffer to the cup
 
 Action Servers:
   + make_coffee (EmptyAction) - The routine to make a cup of coffee
 """
 import rclpy
 from rclpy.node import Node
-import tf2_geometry_msgs
-from tf2_ros import Buffer, TransformListener
 from moveit_wrapper.moveitapi import MoveItApi
-from moveit_wrapper.grasp_planner import GraspPlan, GraspPlanner
-from geometry_msgs.msg import Pose, Point, Quaternion
 from std_msgs.msg import Empty
 from rclpy.callback_groups import ReentrantCallbackGroup
-from franka_msgs.action import Grasp
-from rclpy.time import Time
-from time import sleep
-from franka_msgs.msg import GraspEpsilon
 from botrista_interfaces.action import EmptyAction
 from botrista_interfaces.srv import DelayTime
-from rclpy.action import ActionServer, ActionClient
+from rclpy.action import ActionClient
 
 
 class Botrista(Node):
@@ -65,62 +57,87 @@ class Botrista(Node):
 
         # start action client for pick_kettle action
         self.action_client_pick_kettle = ActionClient(
-            self, EmptyAction, 'pick_kettle', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "pick_kettle", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for place_kettle action
         self.action_client_place_kettle = ActionClient(
-            self, EmptyAction, 'place_kettle', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "place_kettle", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for pick_pot action
         self.action_client_pick_pot = ActionClient(
-            self, EmptyAction, 'pick_pot', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "pick_pot", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for place_pot action
         self.action_client_place_pot = ActionClient(
-            self, EmptyAction, 'place_pot', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "place_pot", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for pour_action action
         self.action_client_pour_kettle = ActionClient(
-            self, EmptyAction, 'pour_kettle', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "pour_kettle", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for scoop action
         self.action_client_scoop = ActionClient(
-            self, EmptyAction, 'scoop', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "scoop", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for pick_filter action
         self.action_client_pick_filter = ActionClient(
-            self, EmptyAction, 'pick_filter', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "pick_filter", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for place_filter action
         self.action_client_place_filter = ActionClient(
-            self, EmptyAction, 'place_filter', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "place_filter", callback_group=ReentrantCallbackGroup()
+        )
 
         # start action client for place_filter_in_pot action
         self.action_client_place_filter_in_pot = ActionClient(
-            self, EmptyAction, 'place_filter_in_pot', callback_group=ReentrantCallbackGroup())
+            self,
+            EmptyAction,
+            "place_filter_in_pot",
+            callback_group=ReentrantCallbackGroup(),
+        )
 
         # start action client for pick_filter_in_pot action
         self.action_client_pick_filter_in_pot = ActionClient(
-            self, EmptyAction, 'pick_filter_in_pot', callback_group=ReentrantCallbackGroup())
+            self,
+            EmptyAction,
+            "pick_filter_in_pot",
+            callback_group=ReentrantCallbackGroup(),
+        )
 
         # start action client for pour_pot action
         self.pour_pot_client = ActionClient(
-            self, EmptyAction, 'pour_pot', callback_group=ReentrantCallbackGroup())
+            self, EmptyAction, "pour_pot", callback_group=ReentrantCallbackGroup()
+        )
 
         # Delay service client
         self.delay_client = self.create_client(
-            DelayTime, "delay", callback_group=ReentrantCallbackGroup())
+            DelayTime, "delay", callback_group=ReentrantCallbackGroup()
+        )
 
         self.start_coffee_subscriber = self.create_subscription(
-            Empty, "coffee_start", self.start_coffee_callback, 10, callback_group=ReentrantCallbackGroup())
+            Empty,
+            "coffee_start",
+            self.start_coffee_callback,
+            10,
+            callback_group=ReentrantCallbackGroup(),
+        )
 
         # move it api to home robot
-        self.moveit_api = MoveItApi(self,
-                                    "panda_link0",
-                                    "panda_hand_tcp",
-                                    "panda_manipulator",
-                                    "joint_states",
-                                    "panda")
+        self.moveit_api = MoveItApi(
+            self,
+            "panda_link0",
+            "panda_hand_tcp",
+            "panda_manipulator",
+            "joint_states",
+            "panda",
+        )
 
         self.has_started = False
 

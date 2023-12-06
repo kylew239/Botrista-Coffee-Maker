@@ -7,7 +7,7 @@ and controls the gripper as well.
 Action Servers:
   + pick_pot (botrista_interfaces/action/Emptyaction) - pick up pot
   + place_pot (botrista_interfaces/action/Emptyaction) - place pot
-  + pour_pot (botrista_interfaces/action/Emptyaction) - pour pot
+  + pour_pot (botrista_interfaces/action/Emptyaction) - pour coffee to the cup
 
 Client
 ------
