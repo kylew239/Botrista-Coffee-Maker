@@ -2,26 +2,24 @@ import numpy as np
 
 
 class KalmanFilter:
-    """Implements the base linear kalman filter.
+    """Implements the base linear Kalman filter.
 
     Kalman filter equations taken from Probabilistic Robotics, Thrun et al,
     Chapter 3, Section 2.
+
+    :param A: The state transition matrix.
+    :type A: np.ndarray
+    :param R: The state covariance matrix.
+    :type R: np.ndarray
+    :param C: The measurement prediction matrix.
+    :type C: np.ndarray
+    :param Q: The measurement covariance matrix.
+    :type Q: np.ndarray
     """
 
-    def __init__(self,
-                 A,
-                 R,
-                 Q,
-                 C):
+    def __init__(self, A, R, Q, C):
         """
         Initialize the Kalman Filter.
-
-        Arguments:
-            + A (np.ndarray): The state transition matrix.
-            + R (np.ndarray): The state covariance matrix.
-            + C (np.ndarray): The measurement prediction matrix.
-            + Q (np.ndarray): The measurement covariance matrix.
-
         """
         self.A = A
         self.R = R
@@ -32,17 +30,16 @@ class KalmanFilter:
         """
         Filter the mean.
 
-        Arguments:
-            + mean (np.ndarray): The previous mean.
-            + sigma (np.ndarray): The previous sigma.
-            + zt (np.ndarray): The new measurement.
-
-        Returns
-        -------
-            A tuple of the (mean_t, sigma_t).
-
+        :param mean: The previous mean.
+        :type mean: np.ndarray
+        :param sigma: The previous sigma.
+        :type sigma: np.ndarray
+        :param zt: The new measurement.
+        :type zt: np.ndarray
+        :return: A tuple of (mean_t, sigma_t).
+        :rtype: tuple
         """
-        mean_prediction = self.A@mean
+        mean_prediction = self.A @ mean
         sigma_t = self.A @ sigma @ self.A.T + self.R
         K = sigma_t @ self.C.T @ np.linalg.inv(self.C @
                                                sigma_t @ self.C.T + self.Q)

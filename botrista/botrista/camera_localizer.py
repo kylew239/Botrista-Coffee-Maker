@@ -136,15 +136,18 @@ class FilterTag:
         """
         Initialize the filter.
 
-        Arguments:
-        ---------
-            + tf_broadcaster (TransformBroadcaster): The Tf broadcaster to use.
-            + tf_buffer (Buffer): The Tf buffer to use.
-            + clock (Clock): The clock to use.
-            + target_frame (str): The target frame to publish the filtered transform to.
-            + source_frame (str): The source frame to filter.
-            + predict_up (bool): Whether or not to predict the tag facing directly up.
-
+        :param tf_broadcaster: The Tf broadcaster to use.
+        :type tf_broadcaster: TransformBroadcaster
+        :param tf_buffer: The Tf buffer to use.
+        :type tf_buffer: Buffer
+        :param clock: The clock to use.
+        :type clock: Clock
+        :param target_frame: The target frame to publish the filtered transform to.
+        :type target_frame: str
+        :param source_frame: The source frame to filter.
+        :type source_frame: str
+        :param predict_up: Whether or not to predict the tag facing directly up.
+        :type predict_up: bool
         """
         self.mean = None
         self.sigma = np.identity(7) * 5.0
@@ -211,13 +214,10 @@ class FilterTag:
         """
         Convert the TF to a measurement vector.
 
-        Arguments:
-            + tf (TransformStamped): The transform to convert.
-
-        Returns
-        -------
-            a 7 length column vector of the transform.
-
+        :param tf: The transform to convert.
+        :type tf: TransformStamped
+        :return: A 7 length column vector of the transform.
+        :rtype: np.array
         """
         return np.array(
             [
@@ -237,13 +237,30 @@ class FilterTag:
         """
         Undo the vec_to_tf conversion.
 
-        Arguments:
-            + vec (np.array): 7 length column vector of the transform.
+        :param vec: 7 length column vector of the transform.
+        :type vec: np.array
+        :return: The Tf transform.
+        :rtype: Transform
+        """
+        tf = Transform()
+        vec = vec.flatten().ravel()
+        tf.translation.x = vec[0]
+        tf.translation.y = vec[1]
+        tf.translation.z = vec[2]
+        tf.rotation.x = vec[3]
+        tf.rotation.y = vec[4]
+        tf.rotation.z = vec[5]
+        tf.rotation.w = vec[6]
+        return tf
 
-        Returns
-        -------
-            The Tf transform.
+    def vec_to_tf(self, vec):
+        """
+        Undo the vec_to_tf conversion.
 
+        :param vec: 7 length column vector of the transform.
+        :type vec: np.array
+        :return: The Tf transform.
+        :rtype: Transform
         """
         tf = Transform()
         vec = vec.flatten().ravel()
