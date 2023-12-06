@@ -1,6 +1,8 @@
 """
 Code to generate a .yaml file for the mask used to detect the white cup.
 
+This is not a node.
+
 The d435i camera is used and an image with trackbars is created to drag and
 find the hsv cutoffs.
 
