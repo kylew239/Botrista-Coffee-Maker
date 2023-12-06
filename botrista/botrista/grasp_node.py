@@ -1,12 +1,10 @@
-"""
-Performs the grasping action of the standard handles.
+"""Performs the grasping action of the standard handles.
 
 Action Servers:
-  + grasp_process (botrista_interfaces/action/GraspProcess) - grasp action
+  grasp_process (botrista_interfaces/action/GraspProcess) - grasp action
 
-Client
-------
-  + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
+Client:
+  delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
 
 """
 
