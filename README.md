@@ -7,7 +7,7 @@ Stephen Ferro, Anuj Natraj, Carter DiOrio, Kyle Wang, and Jihai Zhao
 A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup of pour over coffee. 
 
 ## Quickstart Instructions:
-1. Use "git clone git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git" to clone the repositiory into the 'src' directory of a new ROS2 workspace.
+1. Use the command "git clone git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git" in the terminal to clone the repositiory into the 'src' directory of a new ROS2 workspace.
 2. Build and source the workspace.
 3. After building and sourcing the workspace, launch rviz and the required nodes using "ros2 launch botrista botrista.launch.py" .
 4. To start the coffee-making routine, place a white cup in the cup hold in front of the robot. The robot will detect the cup and beign making coffee.
