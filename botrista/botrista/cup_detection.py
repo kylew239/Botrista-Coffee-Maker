@@ -176,11 +176,11 @@ class CupDetection(Node):
         Set the camera info.
 
         Keyword Arguments:
-            cam_info (sensor_msgs/CameraInfo)-- Intrinsic points of the camera.
+            + cam_info (sensor_msgs/CameraInfo)-- Intrinsic points of the camera.
 
         Returns
         -------
-            Empty return
+            + Empty return
 
         """
         self.cam.fromCameraInfo(cam_info)
@@ -192,11 +192,11 @@ class CupDetection(Node):
         Once the tf is found, changes state.
 
         Keyword Arguments:
-            Image (sensor_msgs/Image)-- Image of the camera.
+            + Image (sensor_msgs/Image)-- Image of the camera.
 
         Returns
         -------
-            Empty return
+            + Empty return
 
         """
         try:
