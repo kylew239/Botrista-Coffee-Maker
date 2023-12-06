@@ -1,3 +1,11 @@
+"""
+Detects the largest handle and publishes the transform to the handle in tf.
+
+Subscriptions:
+    + /camera/d405/color/image_raw (sensor_msgs/Image) - the image to use for handle detection.
+
+"""
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
@@ -17,15 +25,6 @@ from std_msgs.msg import Header
 
 
 class HandleDetector(Node):
-    """
-    Detects the largest handle and publishes the transform to the handle in tf.
-
-    Subscriptions:
-        + /camera/d405/color/image_raw (sensor_msgs/Image) - the image to use 
-        for handle detection.
-
-    """
-
     def __init__(self):
         super().__init__("handle_detector")
 

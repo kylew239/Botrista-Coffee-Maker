@@ -1,3 +1,9 @@
+"""
+Performs the grasping action of the standard handles.
+
+Actions:
+    + /grasp 
+"""
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, TransformStamped, Transform
@@ -15,13 +21,6 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 
 class GraspNode(Node):
-    """
-    Performs the grasping action of the standard handles.
-
-    Actions:
-        + /grasp 
-    """
-
     def __init__(self):
         super().__init__('GraspNode')
 

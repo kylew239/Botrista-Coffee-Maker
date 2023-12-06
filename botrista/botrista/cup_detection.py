@@ -7,24 +7,20 @@ Uses the wrapper class made in moveitapi. Moveit moves the robot to various poin
 and controls the gripper as well.
 
 Parameters
-----------
   + lower_mask (Integer List) - lower mask used to detect the cup.
   + upper_mask (Integer List) - higher mask used to detect the cup.
 
 Subscriptions
--------------
   + image_rect_color (sensor_msgs/Image) - images published by the d435 camera.
   + camera_info (sensor_msgs/CameraInfo) - intrinsic info about the d435 camera.
   + restart_coffee (std_msgs/Empty) - resets the state machine to look for the cup to
     start coffee making process again
 
 Publishes
----------
   + cup_image (sensor_msgs/Image) - image after processing showing the cup location.
   + coffee_start (std_msgs/Empty) - sends a message to the topic to start making coffee.
 
 Client
-------
   + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
 
 """

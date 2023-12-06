@@ -43,6 +43,10 @@ import numpy as np
 
 class Pot(Node):
     def __init__(self):
+        """
+        Description:
+            Initializes the pot node
+        """
         super().__init__("pot")
 
         self.pot_actual_place = TransformStamped()

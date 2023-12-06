@@ -2,7 +2,6 @@
 A node that handles camera localization and tag filtering.
 
 Publishes Transforms:
---------------------
     + d405_link (geometry_msgs/TransformStamped) - The tf from the d405 camera to the robot.
     + filtered_camera_localizer_tag (geometry_msgs/TransformStamped) - The filtered tf of the camera localizer tag.
     + filtered_kettle_tag (geometry_msgs/TransformStamped) - The filtered tf of the kettle tag.

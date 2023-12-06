@@ -1,3 +1,28 @@
+"""
+Manages the scoop action, which picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
+
+Subscriptions:
+  + coffee_start (Empty) - 
+
+Service Clients:
+  + delay (DelayTime) - 
+
+Action Clients:
+  + pick_kettle (EmptyAction) - 
+  + place_kettle (EmptyAction) - 
+  + pick_pot (EmptyAction) - 
+  + place_pot (EmptyAction) - 
+  + pour_kettle (EmptyAction) - 
+  + scoop (EmptyAction) - 
+  + pick_filter (EmptyAction) - 
+  + place_filter (EmptyAction) - 
+  + place_filter_in_pot (EmptyAction) - 
+  + pick_filter_in_pot (EmptyAction) - 
+  + pour_pot (EmptyAction) - 
+
+Action Servers:
+  + make_coffee (EmptyAction) - The routine to make a cup of coffee
+"""
 import rclpy
 from rclpy.node import Node
 import tf2_geometry_msgs
@@ -78,16 +103,9 @@ class Botrista(Node):
         self.action_client_pick_filter_in_pot = ActionClient(
             self, EmptyAction, 'pick_filter_in_pot', callback_group=ReentrantCallbackGroup())
 
+        # start action client for pour_pot action
         self.pour_pot_client = ActionClient(
             self, EmptyAction, 'pour_pot', callback_group=ReentrantCallbackGroup())
-
-        # start action server for making coffee routine
-        self.make_coffee_action = ActionServer(
-            self,
-            EmptyAction,
-            'make_coffee',
-            self.make_coffee_callback,
-            callback_group=ReentrantCallbackGroup())
 
         # Delay service client
         self.delay_client = self.create_client(
@@ -107,17 +125,20 @@ class Botrista(Node):
         self.has_started = False
 
     async def start_coffee_callback(self, msg):
+        """
+        Description:
+            Callback function for the coffee_start subscriber. Triggers the make_coffee routine.
+        """
         if not self.has_started:
             self.get_logger().warn("Starting coffee routine")
             self.has_started = True
             await self.make_coffee()
 
-    async def make_coffee_callback(self, goal_handle):
-        await self.make_coffee()
-        goal_handle.succeed()
-        return EmptyAction.Result()
-
     async def make_coffee(self):
+        """
+        Description:
+            Calls the actions required to make a cup of coffee in order.
+        """
         # 1. Turns on Kettle (action)
         # 2. Pick up Filter from filter stand (pick_filter action)
         goal2 = EmptyAction.Goal()

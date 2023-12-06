@@ -1,10 +1,10 @@
 """
-Manages the scoop action, which picks up the scoop, scoops coffee, move to the coffee pot, and dumps the coffee
+Manages the scoop action, which picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
 
-ACTION CLIENTS:
+Action Clients:
   + grasp_process (GraspProcess) - A seriers of movements and gripper commands for the robot to complete a grasp action
 
-ACTION SERVERS:
+Action Servers:
   + scoop (EmptyAction) - The scooping routine
 """
 
@@ -156,7 +156,8 @@ class CoffeeGrounds(Node):
 
     async def move_to_pot(self):
         """
-        Moves the scoop to the pot to dump grounds.
+        Description:
+            Moves the scoop to the pot to dump grounds.
         """
 
         # Create horizontal path constraint
