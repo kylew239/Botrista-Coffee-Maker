@@ -31,7 +31,7 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 - realsense.launch.py: Launches both the d435i and the d405, the april tag node, and the camera_localizer node.
 
 ## 'make_coffee' Routine High Level Overview:
-- This system is essentially a series of service and action calls which cause the robot to brew coffee when called in order.
+This system is essentially a series of service and action calls which cause the robot to brew coffee when called in order.
 1. The cup_detection node wait until it detects an empty cup placed in the detection area, then publishes a message on the 'coffee_start' topic, which cuases the run_botrista node to start the routine
 2. Picks up the Filter from filter stand using the pick_filter action
 3. Places the Filter on the Pot using the place_filter_in_pot action
