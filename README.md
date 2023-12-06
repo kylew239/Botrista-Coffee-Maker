@@ -32,19 +32,19 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 
 ## 'make_coffee' Routine High Level Overview:
 - This system is essentially a series of service and action calls which cause the robot to brew coffee when called in order.
-    1. The cup_detection node wait until it detects an empty cup placed in the detection area, then publishes a message on the 'coffee_start' topic, which cuases the run_botrista node to start the routine
-    2. Picks up the Filter from filter stand using the pick_filter action
-    3. Places the Filter on the Pot using the place_filter_in_pot action
-    4. Pick up a full scoop of coffee gournds and dump them in filter. This is all handled by the scoop action
-    5. Pick up Kettle with the pick_kettle action
-    6. Pour water from kettle using the pour_action action
-    7. Place Kettle back on kettle stand w ith the place_kettle action
-    8. Wait for coffee grounds to soak using the delay service
-    9. Pick up Filter from the Pot using the pick_filter_in_pot action
-    10. Place Filter on filter stand (place_filter action)
-    11. Pick up Pot from pot stand (pick_pot action)
-    12. Pour Coffee (pour_pot action)
-    13. Put the Pot back on pot stand (place_pot action)
+1. The cup_detection node wait until it detects an empty cup placed in the detection area, then publishes a message on the 'coffee_start' topic, which cuases the run_botrista node to start the routine
+2. Picks up the Filter from filter stand using the pick_filter action
+3. Places the Filter on the Pot using the place_filter_in_pot action
+4. Pick up a full scoop of coffee gournds and dump them in filter. This is all handled by the scoop action
+5. Pick up Kettle with the pick_kettle action
+6. Pour water from kettle using the pour_action action
+7. Place Kettle back on kettle stand w ith the place_kettle action
+8. Wait for coffee grounds to soak using the delay service
+9. Pick up Filter from the Pot using the pick_filter_in_pot action
+10. Place Filter on filter stand (place_filter action)
+11. Pick up Pot from pot stand (pick_pot action)
+12. Pour Coffee (pour_pot action)
+13. Put the Pot back on pot stand (place_pot action)
 
 ## Lessons Learned and Future Work:
 - The biggest issues we encoutered with this project was moveit getting the robot into configurations that it could not get itself out of. This happened most frequently with motions that had a lot of path or goal constraints, such as moving the scoop to the pot or pouring the pot into the cup. We were able to work around these issues largely by tuning the constraints and by inserting more known intermediate positions for the robot to go to before reaching the goal pose. One idea to further improve this issue would be to have moveit find multiple paths to the goal, then choose the best option, rather than just picking the first solution it finds with RRT. Perhaps it would also be possible to write code allow moveit to take into account future commands as well as the current command. This could allow it to plan a path from which it does not get stuck. 
