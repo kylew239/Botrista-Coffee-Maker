@@ -23,6 +23,7 @@ from tf2_ros import (
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 import numpy as np
 from rclpy.clock import Clock
+from filtering.kalman_filter import KalmanFilter
 
 
 class CameraLocalizer(Node):
@@ -109,7 +110,8 @@ class CameraLocalizer(Node):
             )
 
             localizer_tag_to_franka_tf.child_frame_id = "panda_link0"
-            self.transform_broadcaster.sendTransform(localizer_tag_to_franka_tf)
+            self.transform_broadcaster.sendTransform(
+                localizer_tag_to_franka_tf)
 
             # filter the position of each tag.
             for filter in self.filters:
@@ -153,6 +155,27 @@ class FilterTag:
         self.clock: Clock = clock
         self.predict_up = predict_up
 
+        A = np.identity(7)
+        R = np.identity(7) * 0.01
+        Q = np.array([
+            [0.05, 0, 0, 0, 0, 0, 0],
+            [0, 0.05, 0, 0, 0, 0, 0],
+            [0, 0, 2.0, 0, 0, 0, 0],
+            [0, 0, 0, 10.0, 0, 0, 0],
+            [0, 0, 0, 0, 10.0, 0, 0],
+            [0, 0, 0, 0, 0, 10.0, 0],
+            [0, 0, 0, 0, 0, 0, 10.0]
+        ])
+
+        c_vals = [1.0] * 7
+        if self.predict_up:
+            # always predict the tag to be facing up
+            c_vals[3] = 0.0
+            c_vals[4] = 0.0
+        C = np.diagonal(c_vals)
+
+        self.kalman_filter = KalmanFilter(A, R, Q, C)
+
     def filter(self):
         """Run the filter and publish the filtered transform."""
         now = self.clock.now()
@@ -172,7 +195,8 @@ class FilterTag:
             if self.mean is None:
                 self.mean = vec
             else:
-                self.mean, self.sigma = self.kalman_filter(self.mean, self.sigma, vec)
+                self.mean, self.sigma = self.kalman_filter.filter(
+                    self.mean, self.sigma, vec)
 
         if self.mean is not None:
             filtered_tag = TransformStamped()
@@ -182,52 +206,6 @@ class FilterTag:
             filtered_tag.child_frame_id = "filtered_" + self.source_frame
             filtered_tag.transform = self.vec_to_tf(self.mean)
             self.tf_broadcaster.sendTransform(filtered_tag)
-
-    def kalman_filter(self, mean, sigma, zt):
-        """
-        Filter the mean.
-
-        Arguments:
-            + mean (np.array): The previous mean.
-            + sigma (np.array): The previous sigma.
-            + zt (np.array): The new measurement.
-
-        Returns
-        -------
-            A tuple of the (mean_t, sigma_t).s
-
-        """
-        # for the state transition it shouldn't move
-        A = np.identity(7)
-        R = np.identity(7) * 0.01
-
-        # measurement prediction is identity, the tag shouldn't be moving
-        mean_prediction = A @ mean
-
-        if self.predict_up:
-            mean_prediction[3] = 0.0
-            mean_prediction[4] = 0.0
-
-        # measurement noise
-        Q = np.array(
-            [
-                [0.05, 0, 0, 0, 0, 0, 0],
-                [0, 0.05, 0, 0, 0, 0, 0],
-                [0, 0, 2.0, 0, 0, 0, 0],
-                [0, 0, 0, 10.0, 0, 0, 0],
-                [0, 0, 0, 0, 10.0, 0, 0],
-                [0, 0, 0, 0, 0, 10.0, 0],
-                [0, 0, 0, 0, 0, 0, 10.0],
-            ]
-        )
-        C = np.identity(7)
-
-        # kalman filter equations
-        sigma_t = A @ sigma @ A.T + R
-        K = sigma_t @ C.T @ np.linalg.inv(C @ sigma_t @ C.T + Q)
-        u_t = mean_prediction + K @ (zt - C @ mean_prediction)
-        sigma_t = (np.identity(7) - K @ C) @ sigma_t
-        return u_t, sigma_t
 
     def tf_to_vec(self, tf: TransformStamped):
         """
