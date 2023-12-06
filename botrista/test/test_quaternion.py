@@ -4,6 +4,7 @@ import numpy as np
 
 
 def test_quaternion_calculation():
+
     #Test to see if the quaternion function returns correct quaternions
     errors = []
     q = Quaternion(x=0.0, y=0.0, z=1.0, w=0.0)
