@@ -10,6 +10,25 @@ from launch.substitutions import (
 from launch.conditions import IfCondition
 
 
+"""
+Description:
+    This launch file launches the following nodes:
+        - coffee_grounds
+        - cup_detection
+        - delay_node
+        - grasp_node
+        - handle_detector
+        - kettle
+        - pick_filter
+        - pot
+        - pouring
+        - run_botrista
+    It also runs the following additional launch files:
+        - realsense.launch.py
+        - open_franka.launch.xml
+"""
+
+
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(

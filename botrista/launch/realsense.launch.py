@@ -10,8 +10,10 @@ from launch.substitutions import (
 from launch.conditions import IfCondition
 
 
-# this is a launch file launches both the d435i and the d405, the april
-# tag node, and the camera_localizer node
+"""
+Description:
+    This launch file launches both the d435i and the d405, the april tag node, and the camera_localizer node
+"""
 
 def generate_launch_description():
     return LaunchDescription([

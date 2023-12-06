@@ -20,7 +20,6 @@ class Botrista(Node):
     """
     Description:
         Waits to detect an empty cup placed in the detection area, then runs following routine:
-            1. Turns on Kettle (action)
             2. Pick up Filter from filter stand (pick_filter action)
             3. Place Filter on Pot (place_filter_in_pot action)
             4. Pick up scoop and dump coffee grounds in filter (scoop action)

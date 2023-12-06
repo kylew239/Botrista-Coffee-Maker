@@ -7,12 +7,13 @@ Stephen Ferro, Anuj Natraj, Carter DiOrio, Kyle Wang, and Jihai Zhao
 A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup of pour over coffee. 
 
 ## Quickstart Instructions:
-1. Use 'git clone git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git' to clone the repositiory into the 'src' directory of a new ROS2 workspace.
+1. Use "git clone git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git" to clone the repositiory into the 'src' directory of a new ROS2 workspace.
 2. Build and source the workspace.
-3. After building and sourcing the workspace, launch rviz and the required nodes using 'ros2 launch botrista botrista.launch.py'.
+3. After building and sourcing the workspace, launch rviz and the required nodes using "ros2 launch botrista botrista.launch.py" .
 4. To start the coffee-making routine, place a white cup in the cup hold in front of the robot. The robot will detect the cup and beign making coffee.
 
 ## Nodes:
+### botrista Package:
 - camera_localizer: localizes the d435 and d45 cameras and publishes transforms for april tags seen by the cameras from the robot base
 - coffee_grounds: controls the actions for picking up and dumping the coffee scoop
 - cup_detection: handles detection of the coffee cup in the cup holder and triggers the rest of the routine. also publishes a transform to the top of the coffee cup
@@ -24,6 +25,9 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 - pot: handles action for picking up, pouring, and placing the coffee pot
 - pouring: offers the pour action, which is used by the kettle to create spiral motions
 - run_botrista: the main node which offers the make_coffee action
+### moveit_wrapper package
+- grasp_planner: handles planning and execution of grasp actions
+- moveitapi: a wrapper class for sending moveit commands to a robot like the Franka
 
 ## Launchfiles:
 - botrista.launch.py: the main launchfile to launch botrista. It launches all the nodes listed above except camera_localizer, as well as running the two launch files below. Once launched, the robot is ready to execture the make_coffee action once it detects a cup.
