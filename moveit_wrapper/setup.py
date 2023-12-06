@@ -15,8 +15,8 @@ setup(
     zip_safe=True,
     maintainer='cdiorio',
     maintainer_email='carterdiorio2024@u.northwestern.edu',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Package using MoveIt to control the Franka arm',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

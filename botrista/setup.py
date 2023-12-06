@@ -18,8 +18,8 @@ setup(
     zip_safe=True,
     maintainer='cdiorio',
     maintainer_email='carterdiorio2024@u.northwestern.edu',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Main package that makes coffee',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

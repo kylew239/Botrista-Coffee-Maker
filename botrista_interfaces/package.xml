@@ -3,9 +3,9 @@
 <package format="3">
   <name>botrista_interfaces</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Package that contains custom services and actions to make coffee</description>
   <maintainer email="kylewang239@gmail.com">kylewang</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
