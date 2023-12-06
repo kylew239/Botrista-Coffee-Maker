@@ -15,7 +15,8 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 class Delay_Node(Node):
     def __init__(self):
         """
-        initializes the delay_node
+        Description:
+            Initializes the delay_node
 
         """
         super().__init__("delay_node")
@@ -24,7 +25,8 @@ class Delay_Node(Node):
 
     def delay_callback(self, request, response):
         """
-        Callback function for delay service
+        Description:
+            Callback function for delay service
 
         """
         sleep(request.time)

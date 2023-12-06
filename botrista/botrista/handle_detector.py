@@ -26,6 +26,10 @@ from std_msgs.msg import Header
 
 class HandleDetector(Node):
     def __init__(self):
+        """
+        Description:
+            Initialized the handle_detector node
+        """
         super().__init__("handle_detector")
 
         # create subscription to camera topic
@@ -65,10 +69,24 @@ class HandleDetector(Node):
         self.transform_broadcaster = TransformBroadcaster(self, qos=10)
 
     def depth_image_callback(self, image):
+        """
+        Description:
+            Callback function for depth_image_subscription
+
+        Arguments:
+            + image
+        """
         self.depth_image = self.cv_bridge.imgmsg_to_cv2(
             image, desired_encoding="passthrough")
 
     def camera_info_callback(self, camera_info):
+        """
+        Description:
+            Callback function for camera_info_subscription
+
+        Arguments:
+            + camera_info
+        """
         self.intrinsics = pyrealsense2.intrinsics()
         self.intrinsics.width = camera_info.width
         self.intrinsics.height = camera_info.height
@@ -80,6 +98,13 @@ class HandleDetector(Node):
         self.intrinsics.coeffs = [i for i in camera_info.d]
 
     def image_callback(self, image):
+        """
+        Description:
+            Callback function for image_subscription
+
+        Arguments:
+            + image
+        """
 
         if self.depth_image is None or self.intrinsics is None:
             return
@@ -133,6 +158,18 @@ class HandleDetector(Node):
                 pass
 
     def contour_to_depth(self, contour, image, direction_contour, raw):
+        """
+        Description:
+            Determines the position of a handle based on a thersholded image
+
+        Arguments:
+            + contour (numpy.ndarray) - the thresholded image.
+            + image (numpy.ndarray) - the thresholded image.
+            + direction_contour (numpy.ndarray) - the thresholded image.
+
+        Returns:
+            A pose for the handle relative to the camera
+        """
 
         try:
             # Get center of the contour
@@ -222,6 +259,18 @@ class HandleDetector(Node):
         )
 
     def get_rect_angle(self, rect_points, height):
+        """
+        Description:
+            Determines the position of a handle based on a thersholded image
+
+        Arguments:
+            + rect_points
+            + height
+
+        Returns:
+            + angle - the angle of the handle
+            + use_edge 
+        """
         edge1 = np.subtract(rect_points[1], rect_points[0])
         edge2 = np.subtract(rect_points[2], rect_points[1])
 
@@ -236,20 +285,15 @@ class HandleDetector(Node):
             use_edge = -use_edge
 
         horizontal = np.array([0, 1])
-        # dot = np.dot(horizontal, use_edge)
-        # det = np.linalg.det(np.vstack([horizontal, use_edge]))
         angle = np.arctan2(use_edge[0]-horizontal[0],
                            use_edge[1]-horizontal[1])
 
-        # angle = np.arccos(np.dot(use_edge, horizontal) /
-        #                   (np.linalg.norm(use_edge) * np.linalg.norm(horizontal)))
-        # veritcal = np.array([0, 1])
-        # angle *= np.sign(np.dot(use_edge, veritcal))
         return angle, use_edge
 
     def find_handle_contour(self, image, erode, dilate):
         """
-        Find the handle in the thresholded image.
+        Description:
+            Find the handle in the thresholded image.
 
         Decides which contour is the handled by finding the largest contour.
 
@@ -288,7 +332,8 @@ class HandleDetector(Node):
 
     def threshold_image(self, image, low, upper):
         """
-        Thresholds the image to isolate the handle.
+        Description:
+            Thresholds the image to isolate the handle.
 
         Arguments:
             + image (numpy.ndarray) - the image to threshold.
