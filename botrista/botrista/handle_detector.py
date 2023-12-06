@@ -2,8 +2,15 @@
 Detects the largest handle and publishes the transform to the handle in tf.
 
 Subscriptions:
-    + /camera/d405/color/image_raw (sensor_msgs/Image) - the image to use for handle detection.
+    + /camera/d405/color/image_rect_raw (sensor_msgs/Image): the image to use for handle detection.
+    + /camera/d405/aligned_depth_to_color/image_raw (sensor_msgs/Image): the depth image to use for handle detection.
+    + /camera/d405/aligned_depth_to_color/camera_info (sensor_msgs/CameraInfo): the camera intrinsics.
 
+Publishes:
+    + /depth_mask (sensor_msgs/Image): the masked depth image.
+
+Transforms:
+    + handle (geometry_msgs/TransformStamped): the transform to the handle.
 """
 
 import rclpy
@@ -33,10 +40,7 @@ from std_msgs.msg import Header
 
 class HandleDetector(Node):
     def __init__(self):
-        """
-        Description:
-            Initialized the handle_detector node
-        """
+        """Initialize the handle_detector node."""
         super().__init__("handle_detector")
 
         # create subscription to camera topic
@@ -88,11 +92,14 @@ class HandleDetector(Node):
 
     def depth_image_callback(self, image):
         """
-        Description:
-            Callback function for depth_image_subscription
+        Callback function for depth image.
 
-        Arguments:
-            + image
+        Args:
+            sensor_msgs.msg.Image: The depth image received from the camera.
+
+        Returns:
+            None
+
         """
         self.depth_image = self.cv_bridge.imgmsg_to_cv2(
             image, desired_encoding="passthrough"
@@ -100,11 +107,13 @@ class HandleDetector(Node):
 
     def camera_info_callback(self, camera_info):
         """
-        Description:
-            Callback function for camera_info_subscription
+        Callback function for camera info.
 
-        Arguments:
-            + camera_info
+        Args:
+            sensor_msgs.msg.CameraInfo: The camera info data.
+
+        Returns:
+            None
         """
         self.intrinsics = pyrealsense2.intrinsics()
         self.intrinsics.width = camera_info.width
@@ -118,13 +127,15 @@ class HandleDetector(Node):
 
     def image_callback(self, image):
         """
-        Description:
-            Callback function for image_subscription
+        Callback function for handle detection from the image.
 
-        Arguments:
-            + image
+        Args:
+            sensor_msgs.msg.Image: The input image data.
+
+        Returns:
+            None
+
         """
-
         if self.depth_image is None or self.intrinsics is None:
             return
 
@@ -135,7 +146,8 @@ class HandleDetector(Node):
             (self.hue[0], self.saturation[0], self.value[0]),
             (self.hue[1], self.saturation[1], self.value[1]),
         )
-        yellow_thresh = self.threshold_image(cv_img, (27, 59, 70), (72, 255, 255))
+        yellow_thresh = self.threshold_image(
+            cv_img, (27, 59, 70), (72, 255, 255))
         handle_contour, _ = self.find_handle_contour(handle_thresh, 5, 10)
         direction_contour, clean_direction = self.find_handle_contour(
             yellow_thresh, 0, 0
@@ -177,18 +189,18 @@ class HandleDetector(Node):
 
     def contour_to_depth(self, contour, image, direction_contour, raw):
         """
-        Description:
-            Determines the position of a handle based on a thersholded image
+        Determines the position of a handle based on a thresholded image.
 
-        Arguments:
-            + contour (numpy.ndarray) - the thresholded image.
-            + image (numpy.ndarray) - the thresholded image.
-            + direction_contour (numpy.ndarray) - the thresholded image.
+        Args:
+            contour (numpy.ndarray): The thresholded image.
+            image (numpy.ndarray): The thresholded image.
+            direction_contour (numpy.ndarray): The thresholded image.
+            raw: The raw image.
 
         Returns:
-            A pose for the handle relative to the camera
-        """
+            A pose for the handle relative to the camera.
 
+        """
         try:
             # Get center of the contour
             M = cv2.moments(contour)
@@ -211,17 +223,11 @@ class HandleDetector(Node):
         mask = cv2.erode(mask, np.ones((3, 3)))
 
         # get the values under the mask
-        depth_mask = cv2.bitwise_and(self.depth_image, self.depth_image, mask=mask)
-
-        # draw the masked values
-        depth_mask_colormap = cv2.applyColorMap(
-            cv2.convertScaleAbs(depth_mask, alpha=0.03), cv2.COLORMAP_JET
-        )
+        depth_mask = cv2.bitwise_and(
+            self.depth_image, self.depth_image, mask=mask)
 
         contour_img = cv2.drawContours(raw, [contour], -1, (255, 255, 255), 2)
         contour_img = cv2.circle(contour_img, (cX, cY), 7, (255, 255, 255), -1)
-        # contour_img = cv2.circle(
-        #     contour_img, (dX, dY), 7, (0, 0, 255), -1)
 
         # find the minimum area rectangle of the contour
         rotated_rect = cv2.minAreaRect(contour)
@@ -248,8 +254,6 @@ class HandleDetector(Node):
 
         # draw vector between center and direction
         cv2.arrowedLine(contour_img, (cX, cY), (dX, dY), (0, 0, 255), 2)
-
-        # contour_img = cv2.drawContours(contour_img, [box], 0, (0, 0, 255), 2)
 
         self.depth_publisher.publish(self.cv_bridge.cv2_to_imgmsg(contour_img))
 
@@ -280,16 +284,15 @@ class HandleDetector(Node):
 
     def get_rect_angle(self, rect_points, height):
         """
-        Description:
-            Determines the position of a handle based on a thersholded image
+        Determines the position of a handle based on a thresholded image.
 
-        Arguments:
-            + rect_points
-            + height
+        Args:
+            rect_points (list): The points that define the rectangle.
+            height (int): The height of the image.
 
         Returns:
-            + angle - the angle of the handle
-            + use_edge
+            tuple: A tuple containing the angle of the handle and the edge used.
+
         """
         edge1 = np.subtract(rect_points[1], rect_points[0])
         edge2 = np.subtract(rect_points[2], rect_points[1])
@@ -305,22 +308,21 @@ class HandleDetector(Node):
             use_edge = -use_edge
 
         horizontal = np.array([0, 1])
-        angle = np.arctan2(use_edge[0] - horizontal[0], use_edge[1] - horizontal[1])
+        angle = np.arctan2(use_edge[0] - horizontal[0],
+                           use_edge[1] - horizontal[1])
 
         return angle, use_edge
 
     def find_handle_contour(self, image, erode, dilate):
-        """
-        Description:
-            Find the handle in the thresholded image.
+        """Find the handle in the thresholded image.
 
         Decides which contour is the handled by finding the largest contour.
 
         Arguments:
-            + image (numpy.ndarray) - the thresholded image.
+            image (numpy.ndarray): the thresholded image.
 
         Returns:
-            The contour of the handle.
+            list: The contour of the handle.
         """
 
         # erode and dilate to remove noise
@@ -351,22 +353,35 @@ class HandleDetector(Node):
         return largest, clean_image
 
     def threshold_image(self, image, low, upper):
-        """
-        Description:
-            Thresholds the image to isolate the handle.
+        """ Thresholds the image to isolate the handle.
 
         Arguments:
-            + image (numpy.ndarray) - the image to threshold.
+            image (numpy.ndarray): the image to threshold.
 
         Returns:
             The thresholded image.
+
         """
 
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         return cv2.inRange(hsv_image, low, upper)
 
+# Citation 1): https://stackoverflow.com/questions/53033620/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr
+
 
 def euler_to_quaternion(yaw, pitch, roll):
+    """
+    Convert Euler angles to a quaternion.
+
+    Args:
+        yaw (float): Yaw angle in radians.
+        pitch (float): Pitch angle in radians.
+        roll (float): Roll angle in radians.
+
+    Returns:
+        Quaternion: A quaternion representing the rotation.
+
+    """
     qx = np.sin(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) - np.cos(
         roll / 2
     ) * np.sin(pitch / 2) * np.sin(yaw / 2)

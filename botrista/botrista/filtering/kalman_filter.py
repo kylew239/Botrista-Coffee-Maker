@@ -6,20 +6,17 @@ class KalmanFilter:
 
     Kalman filter equations taken from Probabilistic Robotics, Thrun et al,
     Chapter 3, Section 2.
-
-    :param A: The state transition matrix.
-    :type A: np.ndarray
-    :param R: The state covariance matrix.
-    :type R: np.ndarray
-    :param C: The measurement prediction matrix.
-    :type C: np.ndarray
-    :param Q: The measurement covariance matrix.
-    :type Q: np.ndarray
     """
 
     def __init__(self, A, R, Q, C):
         """
-        Initialize the Kalman Filter.
+        Initializes the Kalman Filter.
+
+        Args:
+            A (np.ndarray): The state transition matrix.
+            R (np.ndarray): The state covariance matrix.
+            Q (np.ndarray): The measurement covariance matrix.
+            C (np.ndarray): The measurement prediction matrix.
         """
         self.A = A
         self.R = R
@@ -30,14 +27,14 @@ class KalmanFilter:
         """
         Filter the mean.
 
-        :param mean: The previous mean.
-        :type mean: np.ndarray
-        :param sigma: The previous sigma.
-        :type sigma: np.ndarray
-        :param zt: The new measurement.
-        :type zt: np.ndarray
-        :return: A tuple of (mean_t, sigma_t).
-        :rtype: tuple
+        Args:
+            mean (np.ndarray): The previous mean.
+            sigma (np.ndarray): The previous sigma.
+            zt (np.ndarray): The new measurement.
+
+        Returns:
+            tuple: A tuple of (mean_t, sigma_t).
+
         """
         mean_prediction = self.A @ mean
         sigma_t = self.A @ sigma @ self.A.T + self.R

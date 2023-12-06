@@ -2,12 +2,12 @@
 A node that handles camera localization and tag filtering.
 
 Publishes Transforms:
-    + d405_link (geometry_msgs/TransformStamped) - The tf from the d405 camera to the robot.
-    + filtered_camera_localizer_tag (geometry_msgs/TransformStamped) - The filtered tf of the camera localizer tag.
-    + filtered_kettle_tag (geometry_msgs/TransformStamped) - The filtered tf of the kettle tag.
-    + filtered_filter_tag (geometry_msgs/TransformStamped) - The filtered tf of the filter tag.
-    + filtered_pour_over_tag (geometry_msgs/TransformStamped) - The filtered tf of the pour over tag.
-    + filtered_coffee_scoop (geometry_msgs/TransformStamped) - The filtered tf of the coffee scoop tag.
+    + d405_link (geometry_msgs/TransformStamped): The tf from the d405 camera to the robot.
+    + filtered_camera_localizer_tag (geometry_msgs/TransformStamped): The filtered tf of the camera localizer tag.
+    + filtered_kettle_tag (geometry_msgs/TransformStamped): The filtered tf of the kettle tag.
+    + filtered_filter_tag (geometry_msgs/TransformStamped): The filtered tf of the filter tag.
+    + filtered_pour_over_tag (geometry_msgs/TransformStamped): The filtered tf of the pour over tag.
+    + filtered_coffee_scoop (geometry_msgs/TransformStamped): The filtered tf of the coffee scoop tag.
 """
 from rclpy.node import Node
 import rclpy
@@ -134,20 +134,16 @@ class FilterTag:
         predict_up=False,
     ):
         """
-        Initialize the filter.
+        Initializes the CameraLocalizer filter.
 
-        :param tf_broadcaster: The Tf broadcaster to use.
-        :type tf_broadcaster: TransformBroadcaster
-        :param tf_buffer: The Tf buffer to use.
-        :type tf_buffer: Buffer
-        :param clock: The clock to use.
-        :type clock: Clock
-        :param target_frame: The target frame to publish the filtered transform to.
-        :type target_frame: str
-        :param source_frame: The source frame to filter.
-        :type source_frame: str
-        :param predict_up: Whether or not to predict the tag facing directly up.
-        :type predict_up: bool
+        Args:
+            tf_broadcaster (TransformBroadcaster): The Tf broadcaster to use.
+            tf_buffer (Buffer): The Tf buffer to use.
+            clock (Clock): The clock to use.
+            target_frame (str): The target frame to publish the filtered transform to.
+            source_frame (str): The source frame to filter.
+            predict_up (bool, optional): Whether or not to predict the tag facing directly up. Defaults to False.
+
         """
         self.mean = None
         self.sigma = np.identity(7) * 5.0
@@ -214,10 +210,12 @@ class FilterTag:
         """
         Convert the TF to a measurement vector.
 
-        :param tf: The transform to convert.
-        :type tf: TransformStamped
-        :return: A 7 length column vector of the transform.
-        :rtype: np.array
+        Args:
+            tf (TransformStamped): The transform to convert.
+
+        Returns:
+            np.array: A 7 length column vector of the transform.
+
         """
         return np.array(
             [
@@ -237,10 +235,12 @@ class FilterTag:
         """
         Undo the vec_to_tf conversion.
 
-        :param vec: 7 length column vector of the transform.
-        :type vec: np.array
-        :return: The Tf transform.
-        :rtype: Transform
+        Args:
+            vec (np.array): 7 length column vector of the transform.
+
+        Returns:
+            Transform: The Tf transform.
+
         """
         tf = Transform()
         vec = vec.flatten().ravel()
@@ -257,10 +257,12 @@ class FilterTag:
         """
         Undo the vec_to_tf conversion.
 
-        :param vec: 7 length column vector of the transform.
-        :type vec: np.array
-        :return: The Tf transform.
-        :rtype: Transform
+        Args:
+            vec (np.array): 7 length column vector of the transform.
+
+        Returns:
+            Transform: The Tf transform.
+
         """
         tf = Transform()
         vec = vec.flatten().ravel()
