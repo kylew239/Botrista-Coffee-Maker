@@ -52,4 +52,4 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 - Additionally, there are some additional action the robot could complete the would make for a more full-featured demo. We wanted the robot to be able to scoop it's own coffee grounds, turn the kettle on and boil water by itself, and throw away old coffee grounds. With these features, the demo would essentially reset itself after each run. 
 
 ## Video:
-[![CLICK HERE FOR VIDEO](//[https://i.ytimg.com/an_webp/s52ro0K72f4/mqdefault_6s.webp?du=3000&sqp=CLKxv6sG&rs=AOn4CLC6vXOBmmBzgHAVLhHjjB4Zef74Tw](https://i.ytimg.com/an_webp/s52ro0K72f4/mqdefault_6s.webp?du=3000&sqp=CLKxv6sG&rs=AOn4CLC6vXOBmmBzgHAVLhHjjB4Zef74Tw))](//www.youtube.com/watch?v=s52ro0K72f4)
+[![Video](https://img.youtube.com/vi/s52ro0K72f4/maxresdefault.jpg)](https://www.youtube.com/watch?v=s52ro0K72f4)
