@@ -1,3 +1,12 @@
+"""
+Code to generate a .yaml file for the mask used to detect the white cup.
+
+The d435i camera is used and an image with trackbars is created to drag and
+find the hsv cutoffs.
+
+Run before running any nodes just to figure out the hsv mask.
+"""
+
 import pyrealsense2 as rs
 import numpy as np
 import cv2
@@ -7,9 +16,7 @@ def nothing(x):
     pass
 
 
-"""
-This file is used for tuning the settings of the realsense camera. 
-"""
+"""This file is used for tuning the settings of the realsense camera."""
 
 pipeline = rs.pipeline()
 config = rs.config()
@@ -31,6 +38,7 @@ if device_product_line == "L500":
 else:
     config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
 pipeline.start(config)
+# Set the trackbar for the cv image window
 cv2.namedWindow("RealSense", cv2.WINDOW_AUTOSIZE)
 cv2.createTrackbar("H MIN", "RealSense", 0, 179, nothing)
 cv2.createTrackbar("S MIN", "RealSense", 0, 255, nothing)
@@ -40,6 +48,7 @@ cv2.createTrackbar("S MAX", "RealSense", 255, 255, nothing)
 cv2.createTrackbar("V MAX", "RealSense", 255, 255, nothing)
 try:
     while True:
+        # Read the images
         frames = pipeline.wait_for_frames()
         depth_frame = frames.get_depth_frame()
         color_frame = frames.get_color_frame()
@@ -58,10 +67,12 @@ try:
         hsv_max = "MAX H:{} S:{} V:{}".format(h_max, s_max, v_max)
         lower_bound = np.array([h_min, s_min, v_min])
         upper_bound = np.array([h_max, s_max, v_max])
+        # Mask created to get the cup
         mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
         result = cv2.bitwise_and(color_image, color_image, mask=mask)
         cv2.imshow("RealSense", result)
         key = cv2.waitKey(1)
+        # On closing the window writes the trackbar values to the .yaml file
         if key == 27:
             f = open("../config/cam_cal.yaml", "w")
             f.write("cup_detection:\n")
