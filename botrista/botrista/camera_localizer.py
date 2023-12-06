@@ -14,7 +14,12 @@ import rclpy
 from rclpy.time import Time
 from std_msgs.msg import Header
 from rclpy.duration import Duration
-from tf2_ros import TransformListener, Buffer, TransformBroadcaster, StaticTransformBroadcaster
+from tf2_ros import (
+    TransformListener,
+    Buffer,
+    TransformBroadcaster,
+    StaticTransformBroadcaster,
+)
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 import numpy as np
 from rclpy.clock import Clock
@@ -24,34 +29,49 @@ class CameraLocalizer(Node):
     """A node that handles camera localization and tag filtering."""
 
     def __init__(self):
-        super().__init__('camera_localizer')
+        super().__init__("camera_localizer")
 
         # create transform listener and buffer
         self.buffer = Buffer()
         self.transform_listener = TransformListener(self.buffer, self)
         self.transform_broadcaster = TransformBroadcaster(self)
-        self.static_transform_broadcaster = StaticTransformBroadcaster(
-            self)
+        self.static_transform_broadcaster = StaticTransformBroadcaster(self)
 
         # timer to publish transforms
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         # the tags to filter
-        self.tags = ['camera_localizer_tag', 'kettle_tag',
-                     'filter_tag', 'pour_over_tag', 'coffee_scoop']
+        self.tags = [
+            "camera_localizer_tag",
+            "kettle_tag",
+            "filter_tag",
+            "pour_over_tag",
+            "coffee_scoop",
+        ]
 
         # create the filter objects for each tag
-        self.filters = [FilterTag(self.transform_broadcaster,
-                                  self.buffer,
-                                  self.get_clock(),
-                                  "d435i_color_optical_frame",
-                                  "camera_localizer_tag")]
-        self.filters.extend([FilterTag(self.transform_broadcaster,
-                                       self.buffer,
-                                       self.get_clock(),
-                                       "filtered_camera_localizer_tag",
-                                       tag,
-                                       predict_up=True) for tag in self.tags[1:]])
+        self.filters = [
+            FilterTag(
+                self.transform_broadcaster,
+                self.buffer,
+                self.get_clock(),
+                "d435i_color_optical_frame",
+                "camera_localizer_tag",
+            )
+        ]
+        self.filters.extend(
+            [
+                FilterTag(
+                    self.transform_broadcaster,
+                    self.buffer,
+                    self.get_clock(),
+                    "filtered_camera_localizer_tag",
+                    tag,
+                    predict_up=True,
+                )
+                for tag in self.tags[1:]
+            ]
+        )
 
     async def timer_callback(self):
         """Publish the transform for the d405 and filter each tag."""
@@ -59,22 +79,15 @@ class CameraLocalizer(Node):
         self.transform_broadcaster.sendTransform(
             TransformStamped(
                 header=Header(
-                    stamp=self.get_clock().now().to_msg(),
-                    frame_id="panda_hand"),
+                    stamp=self.get_clock().now().to_msg(), frame_id="panda_hand"
+                ),
                 child_frame_id="d405_link",
                 transform=Transform(
-                    translation=Vector3(
-                        x=0.04,
-                        y=0.0,
-                        z=0.05
-                    ),
+                    translation=Vector3(x=0.04, y=0.0, z=0.05),
                     rotation=Quaternion(
-                        x=0.706825,
-                        y=-0.0005629,
-                        z=0.707388,
-                        w=0.0005633
-                    )
-                )
+                        x=0.706825, y=-0.0005629, z=0.707388, w=0.0005633
+                    ),
+                ),
             )
         )
 
@@ -83,46 +96,41 @@ class CameraLocalizer(Node):
             localizer_tag_to_franka_tf = TransformStamped()
             localizer_tag_to_franka_tf.header = Header(
                 stamp=self.get_clock().now().to_msg(),
-                frame_id='filtered_camera_localizer_tag'
+                frame_id="filtered_camera_localizer_tag",
             )
 
             # measured transform between the localizer tag and the robot base
             localizer_tag_to_franka_tf.transform = Transform(
                 translation=Vector3(
-                    x=0.555-0.200/2,
-                    y=0.302-0.200/2,
+                    x=0.555 - 0.200 / 2,
+                    y=0.302 - 0.200 / 2,
                 ),
-                rotation=Quaternion(
-                    x=0.0,
-                    y=0.0,
-                    z=0.9999997,
-                    w=0.0007963
-                )
+                rotation=Quaternion(x=0.0, y=0.0, z=0.9999997, w=0.0007963),
             )
 
             localizer_tag_to_franka_tf.child_frame_id = "panda_link0"
-            self.transform_broadcaster.sendTransform(
-                localizer_tag_to_franka_tf)
+            self.transform_broadcaster.sendTransform(localizer_tag_to_franka_tf)
 
             # filter the position of each tag.
             for filter in self.filters:
                 filter.filter()
 
         except Exception as e:
-            self.get_logger().warn(
-                f"Exception: {e}")
+            self.get_logger().warn(f"Exception: {e}")
 
 
 class FilterTag:
     """Handles filtering the position of a tag using a Kalman filter."""
 
-    def __init__(self,
-                 tf_broadcaster,
-                 tf_buffer: Buffer,
-                 clock,
-                 target_frame,
-                 source_frame,
-                 predict_up=False):
+    def __init__(
+        self,
+        tf_broadcaster,
+        tf_buffer: Buffer,
+        clock,
+        target_frame,
+        source_frame,
+        predict_up=False,
+    ):
         """
         Initialize the filter.
 
@@ -150,11 +158,12 @@ class FilterTag:
         now = self.clock.now()
         s, _ = now.seconds_nanoseconds()
         try:
-            tf = self.tf_buffer.lookup_transform(self.target_frame,
-                                                 self.source_frame,
-                                                 Time(
-                                                     seconds=s - 1),
-                                                 Duration(seconds=int(1.0/6.0)))
+            tf = self.tf_buffer.lookup_transform(
+                self.target_frame,
+                self.source_frame,
+                Time(seconds=s - 1),
+                Duration(seconds=int(1.0 / 6.0)),
+            )
         except Exception:
             tf = None
 
@@ -163,14 +172,12 @@ class FilterTag:
             if self.mean is None:
                 self.mean = vec
             else:
-                self.mean, self.sigma = self.kalman_filter(
-                    self.mean, self.sigma, vec)
+                self.mean, self.sigma = self.kalman_filter(self.mean, self.sigma, vec)
 
         if self.mean is not None:
             filtered_tag = TransformStamped()
             filtered_tag.header = Header(
-                stamp=self.clock.now().to_msg(),
-                frame_id=self.target_frame
+                stamp=self.clock.now().to_msg(), frame_id=self.target_frame
             )
             filtered_tag.child_frame_id = "filtered_" + self.source_frame
             filtered_tag.transform = self.vec_to_tf(self.mean)
@@ -195,22 +202,24 @@ class FilterTag:
         R = np.identity(7) * 0.01
 
         # measurement prediction is identity, the tag shouldn't be moving
-        mean_prediction = A@mean
+        mean_prediction = A @ mean
 
         if self.predict_up:
             mean_prediction[3] = 0.0
             mean_prediction[4] = 0.0
 
         # measurement noise
-        Q = np.array([
-            [0.05, 0, 0, 0, 0, 0, 0],
-            [0, 0.05, 0, 0, 0, 0, 0],
-            [0, 0, 2.0, 0, 0, 0, 0],
-            [0, 0, 0, 10.0, 0, 0, 0],
-            [0, 0, 0, 0, 10.0, 0, 0],
-            [0, 0, 0, 0, 0, 10.0, 0],
-            [0, 0, 0, 0, 0, 0, 10.0]
-        ])
+        Q = np.array(
+            [
+                [0.05, 0, 0, 0, 0, 0, 0],
+                [0, 0.05, 0, 0, 0, 0, 0],
+                [0, 0, 2.0, 0, 0, 0, 0],
+                [0, 0, 0, 10.0, 0, 0, 0],
+                [0, 0, 0, 0, 10.0, 0, 0],
+                [0, 0, 0, 0, 0, 10.0, 0],
+                [0, 0, 0, 0, 0, 0, 10.0],
+            ]
+        )
         C = np.identity(7)
 
         # kalman filter equations
@@ -228,19 +237,23 @@ class FilterTag:
             + tf (TransformStamped): The transform to convert.
 
         Returns
-        -------    
+        -------
             a 7 length column vector of the transform.
 
         """
-        return np.array([[
-            tf.transform.translation.x,
-            tf.transform.translation.y,
-            tf.transform.translation.z,
-            tf.transform.rotation.x,
-            tf.transform.rotation.y,
-            tf.transform.rotation.z,
-            tf.transform.rotation.w
-        ]]).T
+        return np.array(
+            [
+                [
+                    tf.transform.translation.x,
+                    tf.transform.translation.y,
+                    tf.transform.translation.z,
+                    tf.transform.rotation.x,
+                    tf.transform.rotation.y,
+                    tf.transform.rotation.z,
+                    tf.transform.rotation.w,
+                ]
+            ]
+        ).T
 
     def vec_to_tf(self, vec):
         """

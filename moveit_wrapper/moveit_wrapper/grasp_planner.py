@@ -1,28 +1,26 @@
-from geometry_msgs.msg import Pose, Point
-from control_msgs.action import GripperCommand
-import control_msgs.msg as control_msg
-from moveit_wrapper.moveitapi import MoveItApi, ErrorCodes
+from geometry_msgs.msg import Pose
+from moveit_wrapper.moveitapi import MoveItApi
 from franka_msgs.action import Grasp
 from rclpy.action import ActionClient
 from typing import List
-import numpy as np
 from rclpy.callback_groups import ReentrantCallbackGroup
-from tf2_ros import TransformListener, Buffer, TransformBroadcaster
+from tf2_ros import TransformListener, Buffer
 from rclpy.time import Time
 from controller_manager_msgs.srv import SwitchController
 from franka_msgs.srv import SetLoad
-from rclpy.callback_groups import ReentrantCallbackGroup
 
 
 class GraspPlan:
-    def __init__(self,
-                 approach_pose: Pose,
-                 grasp_pose: Pose,
-                 grasp_command: Grasp.Goal,
-                 retreat_pose: Pose,
-                 reset_load: bool = False,
-                 mass: float = None,
-                 com: List[float] = None):
+    def __init__(
+        self,
+        approach_pose: Pose,
+        grasp_pose: Pose,
+        grasp_command: Grasp.Goal,
+        retreat_pose: Pose,
+        reset_load: bool = False,
+        mass: float = None,
+        com: List[float] = None,
+    ):
         self.approach_pose = approach_pose
         self.grasp_pose = grasp_pose
         self.grasp_command = grasp_command
@@ -37,9 +35,7 @@ class GraspPlanner:
     Plans and executes a grasp action
     """
 
-    def __init__(self,
-                 moveit_api: MoveItApi,
-                 gripper_action_name: str):
+    def __init__(self, moveit_api: MoveItApi, gripper_action_name: str):
         self.moveit_api = moveit_api
         self.node = self.moveit_api.node
 
@@ -56,13 +52,16 @@ class GraspPlanner:
         self.tf_parent_frame = "panda_link0"
 
         self.controller_client = self.node.create_client(
-            SwitchController, "/controller_manager/switch_controller", callback_group=ReentrantCallbackGroup())
+            SwitchController,
+            "/controller_manager/switch_controller",
+            callback_group=ReentrantCallbackGroup(),
+        )
 
         self.load_client = self.node.create_client(
-            SetLoad, "/service_server/set_load", callback_group=ReentrantCallbackGroup())
+            SetLoad, "/service_server/set_load", callback_group=ReentrantCallbackGroup()
+        )
 
     async def execute_grasp_plan(self, grasp_plan: GraspPlan):
-
         self.node.get_logger().warn("going to approach point!")
         curr_poseStamped = await self.moveit_api.get_end_effector_pose()
         curr_pose = curr_poseStamped.pose
@@ -70,18 +69,15 @@ class GraspPlanner:
         plan_result = await self.moveit_api.plan_async(
             point=grasp_plan.approach_pose.position,
             orientation=grasp_plan.approach_pose.orientation,
-            execute=True
+            execute=True,
         )
 
-        self.node.get_logger().warn(f"succeeded in going to approach point")
-
         self.node.get_logger().warn("going to grasp point!")
-        self.node.get_logger().warn(
-            f"grasp pose: {grasp_plan.grasp_pose.orientation}")
+        self.node.get_logger().warn(f"grasp pose: {grasp_plan.grasp_pose.orientation}")
         plan_result = await self.moveit_api.plan_async(
             point=grasp_plan.grasp_pose.position,
             orientation=grasp_plan.grasp_pose.orientation,
-            execute=True
+            execute=True,
         )
 
         if grasp_plan.reset_load:
@@ -96,12 +92,13 @@ class GraspPlanner:
             await self.set_load(grasp_plan)
 
         actual_grasp_position = self.buffer.lookup_transform(
-            "panda_link0", "panda_hand_tcp", Time())
+            "panda_link0", "panda_hand_tcp", Time()
+        )
 
         plan_result = await self.moveit_api.plan_async(
             point=grasp_plan.retreat_pose.position,
             orientation=grasp_plan.retreat_pose.orientation,
-            execute=True
+            execute=True,
         )
 
         return actual_grasp_position

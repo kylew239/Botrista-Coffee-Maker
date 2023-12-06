@@ -9,7 +9,14 @@ Subscriptions:
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, TransformStamped, Transform
+from geometry_msgs.msg import (
+    Pose,
+    Point,
+    Quaternion,
+    Vector3,
+    TransformStamped,
+    Transform,
+)
 import tf2_geometry_msgs
 from image_geometry.cameramodels import PinholeCameraModel
 from scipy.ndimage import median_filter
@@ -34,15 +41,26 @@ class HandleDetector(Node):
 
         # create subscription to camera topic
         self.image_subscription = self.create_subscription(
-            Image, "/camera/d405/color/image_rect_raw", self.image_callback, qos_profile=10)
+            Image,
+            "/camera/d405/color/image_rect_raw",
+            self.image_callback,
+            qos_profile=10,
+        )
 
         # subscription to the depth image
         self.depth_image_subscription = self.create_subscription(
-            Image, "/camera/d405/aligned_depth_to_color/image_raw", self.depth_image_callback, qos_profile=10
+            Image,
+            "/camera/d405/aligned_depth_to_color/image_raw",
+            self.depth_image_callback,
+            qos_profile=10,
         )
 
         self.camera_info_subscription = self.create_subscription(
-            CameraInfo, "/camera/d405/aligned_depth_to_color/camera_info", self.camera_info_callback, qos_profile=10)
+            CameraInfo,
+            "/camera/d405/aligned_depth_to_color/camera_info",
+            self.camera_info_callback,
+            qos_profile=10,
+        )
 
         # published the masked depth image
         self.depth_publisher = self.create_publisher(
@@ -77,7 +95,8 @@ class HandleDetector(Node):
             + image
         """
         self.depth_image = self.cv_bridge.imgmsg_to_cv2(
-            image, desired_encoding="passthrough")
+            image, desired_encoding="passthrough"
+        )
 
     def camera_info_callback(self, camera_info):
         """
@@ -114,43 +133,42 @@ class HandleDetector(Node):
         handle_thresh = self.threshold_image(
             cv_img,
             (self.hue[0], self.saturation[0], self.value[0]),
-            (self.hue[1], self.saturation[1], self.value[1]))
-        yellow_thresh = self.threshold_image(
-            cv_img,
-            (27, 59, 70),
-            (72, 255, 255)
+            (self.hue[1], self.saturation[1], self.value[1]),
         )
+        yellow_thresh = self.threshold_image(cv_img, (27, 59, 70), (72, 255, 255))
         handle_contour, _ = self.find_handle_contour(handle_thresh, 5, 10)
         direction_contour, clean_direction = self.find_handle_contour(
-            yellow_thresh, 0, 0)
+            yellow_thresh, 0, 0
+        )
 
         if handle_contour is not None and direction_contour is not None:
             pose = self.contour_to_depth(
-                handle_contour, handle_thresh, direction_contour, cv_img)
+                handle_contour, handle_thresh, direction_contour, cv_img
+            )
 
             if pose is None:
                 return
 
             try:
-                tf = self.tf_buffer.lookup_transform("panda_link0",
-                                                     "d405_color_optical_frame",
-                                                     time=Time(seconds=0.0))
+                tf = self.tf_buffer.lookup_transform(
+                    "panda_link0", "d405_color_optical_frame", time=Time(seconds=0.0)
+                )
                 pose_panda0 = tf2_geometry_msgs.do_transform_pose(pose, tf)
                 self.transform_broadcaster.sendTransform(
                     TransformStamped(
                         header=Header(
                             stamp=self.get_clock().now().to_msg(),
-                            frame_id="panda_link0"
+                            frame_id="panda_link0",
                         ),
                         child_frame_id="handle",
                         transform=Transform(
                             translation=Vector3(
                                 x=pose_panda0.position.x,
                                 y=pose_panda0.position.y,
-                                z=pose_panda0.position.z
+                                z=pose_panda0.position.z,
                             ),
-                            rotation=pose_panda0.orientation
-                        )
+                            rotation=pose_panda0.orientation,
+                        ),
                     )
                 )
             except Exception as e:
@@ -181,7 +199,7 @@ class HandleDetector(Node):
             M = cv2.moments(direction_contour)
             dX = int(M["m10"] / M["m00"])
             dY = int(M["m01"] / M["m00"])
-        except Exception as e:
+        except Exception:
             return None
 
         # create a mask for the contour
@@ -193,17 +211,15 @@ class HandleDetector(Node):
         mask = cv2.erode(mask, np.ones((3, 3)))
 
         # get the values under the mask
-        depth_mask = cv2.bitwise_and(
-            self.depth_image, self.depth_image, mask=mask)
+        depth_mask = cv2.bitwise_and(self.depth_image, self.depth_image, mask=mask)
 
         # draw the masked values
-        depth_mask_colormap = cv2.applyColorMap(cv2.convertScaleAbs(
-            depth_mask, alpha=0.03), cv2.COLORMAP_JET)
+        depth_mask_colormap = cv2.applyColorMap(
+            cv2.convertScaleAbs(depth_mask, alpha=0.03), cv2.COLORMAP_JET
+        )
 
-        contour_img = cv2.drawContours(
-            raw, [contour], -1, (255, 255, 255), 2)
-        contour_img = cv2.circle(
-            contour_img, (cX, cY), 7, (255, 255, 255), -1)
+        contour_img = cv2.drawContours(raw, [contour], -1, (255, 255, 255), 2)
+        contour_img = cv2.circle(contour_img, (cX, cY), 7, (255, 255, 255), -1)
         # contour_img = cv2.circle(
         #     contour_img, (dX, dY), 7, (0, 0, 255), -1)
 
@@ -220,16 +236,22 @@ class HandleDetector(Node):
         angle = np.arctan2(det, dot)
 
         # draw angle
-        cv2.putText(contour_img, f"{int(angle * 180 / np.pi)}", (cX, cY),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2.putText(
+            contour_img,
+            f"{int(angle * 180 / np.pi)}",
+            (cX, cY),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 0, 255),
+            2,
+        )
 
         # draw vector between center and direction
         cv2.arrowedLine(contour_img, (cX, cY), (dX, dY), (0, 0, 255), 2)
 
         # contour_img = cv2.drawContours(contour_img, [box], 0, (0, 0, 255), 2)
 
-        self.depth_publisher.publish(
-            self.cv_bridge.cv2_to_imgmsg(contour_img))
+        self.depth_publisher.publish(self.cv_bridge.cv2_to_imgmsg(contour_img))
 
         if not depth_mask.any():
             return None
@@ -245,17 +267,15 @@ class HandleDetector(Node):
 
         # get the 3d point
         point = pyrealsense2.rs2_deproject_pixel_to_point(
-            self.intrinsics, [cX, cY], depth)
+            self.intrinsics, [cX, cY], depth
+        )
         point = np.array(point)
         # point[1] = -point[1]
         point /= 1000.0  # mm to m
 
         return Pose(
-            position=Point(
-                x=point[0],
-                y=point[1],
-                z=point[2]),
-            orientation=euler_to_quaternion(angle, 0, 0)
+            position=Point(x=point[0], y=point[1], z=point[2]),
+            orientation=euler_to_quaternion(angle, 0, 0),
         )
 
     def get_rect_angle(self, rect_points, height):
@@ -269,7 +289,7 @@ class HandleDetector(Node):
 
         Returns:
             + angle - the angle of the handle
-            + use_edge 
+            + use_edge
         """
         edge1 = np.subtract(rect_points[1], rect_points[0])
         edge2 = np.subtract(rect_points[2], rect_points[1])
@@ -285,8 +305,7 @@ class HandleDetector(Node):
             use_edge = -use_edge
 
         horizontal = np.array([0, 1])
-        angle = np.arctan2(use_edge[0]-horizontal[0],
-                           use_edge[1]-horizontal[1])
+        angle = np.arctan2(use_edge[0] - horizontal[0], use_edge[1] - horizontal[1])
 
         return angle, use_edge
 
@@ -318,7 +337,8 @@ class HandleDetector(Node):
 
         # find contours
         contours, hierarchy = cv2.findContours(
-            clean_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            clean_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         # identify largest contour
         contours = list(contours)
@@ -343,21 +363,22 @@ class HandleDetector(Node):
         """
 
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        return cv2.inRange(hsv_image,
-                           low,
-                           upper)
+        return cv2.inRange(hsv_image, low, upper)
 
 
 def euler_to_quaternion(yaw, pitch, roll):
-
-    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - \
-        np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + \
-        np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - \
-        np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + \
-        np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qx = np.sin(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) - np.cos(
+        roll / 2
+    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
+    qy = np.cos(roll / 2) * np.sin(pitch / 2) * np.cos(yaw / 2) + np.sin(
+        roll / 2
+    ) * np.cos(pitch / 2) * np.sin(yaw / 2)
+    qz = np.cos(roll / 2) * np.cos(pitch / 2) * np.sin(yaw / 2) - np.sin(
+        roll / 2
+    ) * np.sin(pitch / 2) * np.cos(yaw / 2)
+    qw = np.cos(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) + np.sin(
+        roll / 2
+    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
 
     return Quaternion(x=qx, y=qy, z=qz, w=qw)
 

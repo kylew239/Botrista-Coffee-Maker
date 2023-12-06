@@ -17,7 +17,6 @@ from moveit_msgs.msg import (
     JointConstraint,
     PlanningScene,
     CollisionObject,
-    AttachedCollisionObject,
 )
 import numpy as np
 
@@ -32,7 +31,6 @@ from geometry_msgs.msg import (
     Point,
     Quaternion,
     Vector3,
-    TransformStamped,
 )
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
@@ -43,33 +41,31 @@ from rclpy.task import Future
 
 
 class ErrorCodes(Enum):
-    NO_ERROR = 0,
-    IK_FAIL = 1,
-    GOAL_NOT_SPECIFIED = 2,
-    PATH_NOT_COMPLETE = 3,
+    NO_ERROR = (0,)
+    IK_FAIL = (1,)
+    GOAL_NOT_SPECIFIED = (2,)
+    PATH_NOT_COMPLETE = (3,)
 
 
 class PlanResult:
-    def __init__(self,
-                 error_code,
-                 trajectory,
-                 moveiterror=None
-                 ):
+    def __init__(self, error_code, trajectory, moveiterror=None):
         self.error_code = error_code
         self.trajectory = trajectory
         self.moveiterror = moveiterror
 
 
-class MoveItApi():
+class MoveItApi:
     """Wraps the moveit ROS API for easy of use."""
 
-    def __init__(self,
-                 node: Node,
-                 base_frame: str,
-                 end_effector_frame: str,
-                 group_name: str,
-                 joint_state_topic: str,
-                 robot_model_name: str = ""):
+    def __init__(
+        self,
+        node: Node,
+        base_frame: str,
+        end_effector_frame: str,
+        group_name: str,
+        joint_state_topic: str,
+        robot_model_name: str = "",
+    ):
         """
         Initialize a wrapper for moveit.
 
@@ -93,32 +89,32 @@ class MoveItApi():
 
         # Create MoveGroup.action client
         self.move_group_action_client = ActionClient(
-            self.node,
-            MoveGroup,
-            'move_action'
+            self.node, MoveGroup, "move_action"
         )
 
         # Creating service clients
         self.cbgroup = MutuallyExclusiveCallbackGroup()
         self.ik_client = self.node.create_client(
-            GetPositionIK, "compute_ik", callback_group=self.cbgroup)
+            GetPositionIK, "compute_ik", callback_group=self.cbgroup
+        )
         self.cartesian_client = self.node.create_client(
-            GetCartesianPath, "compute_cartesian_path", callback_group=self.cbgroup)
+            GetCartesianPath, "compute_cartesian_path", callback_group=self.cbgroup
+        )
         self.apply_planning = self.node.create_client(
-            ApplyPlanningScene, "apply_planning_scene", callback_group=self.cbgroup)
+            ApplyPlanningScene, "apply_planning_scene", callback_group=self.cbgroup
+        )
 
         # Create ExecuteTrajectory.action client
         self.execute_trajectory_action_client = ActionClient(
-            self.node,
-            ExecuteTrajectory,
-            'execute_trajectory'
+            self.node, ExecuteTrajectory, "execute_trajectory"
         )
 
         self.node.get_logger().warn("trajectory client")
 
         if not self.ik_client.wait_for_service(timeout_sec=20.0):
             raise RuntimeError(
-                'Timeout waiting for "compute_ik" service to become available')
+                'Timeout waiting for "compute_ik" service to become available'
+            )
 
         self.groupname = group_name
         self.base_frame = base_frame
@@ -135,7 +131,8 @@ class MoveItApi():
 
         # planning scene interface
         self.planning_scene_publisher = self.node.create_publisher(
-            PlanningScene, "planning_scene", 10)
+            PlanningScene, "planning_scene", 10
+        )
 
         # attached object list
         self.objListIndex = []
@@ -147,14 +144,16 @@ class MoveItApi():
         """
         self.end_effector_frame = ee_frame
 
-    def plan(self,
-             max_velocity_scaling_factor=0.1,
-             max_acceleration_scaling_factor=0.1,
-             point: Point = None,
-             orientation: Quaternion = None,
-             start_pose: Pose = None,
-             execute: bool = False,
-             use_jc: bool = True):
+    def plan(
+        self,
+        max_velocity_scaling_factor=0.1,
+        max_acceleration_scaling_factor=0.1,
+        point: Point = None,
+        orientation: Quaternion = None,
+        start_pose: Pose = None,
+        execute: bool = False,
+        use_jc: bool = True,
+    ):
         """
         Plan a path to a point and orientation.
 
@@ -175,24 +174,28 @@ class MoveItApi():
         """
         self.fut = Future()
 
-        rclpy.get_global_executor().create_task(self.plan_async(
-            max_velocity_scaling_factor,
-            max_acceleration_scaling_factor,
-            point,
-            orientation,
-            start_pose,
-            execute,
-            use_jc
-        )).add_done_callback(self.done)
+        rclpy.get_global_executor().create_task(
+            self.plan_async(
+                max_velocity_scaling_factor,
+                max_acceleration_scaling_factor,
+                point,
+                orientation,
+                start_pose,
+                execute,
+                use_jc,
+            )
+        ).add_done_callback(self.done)
 
         return self.fut
 
-    def plan_joint(self,
-                   joint_name: List[str],
-                   joint_values: List[float],
-                   max_velocity_scaling_factor=0.1,
-                   max_acceleration_scaling_factor=0.1,
-                   execute: bool = False):
+    def plan_joint(
+        self,
+        joint_name: List[str],
+        joint_values: List[float],
+        max_velocity_scaling_factor=0.1,
+        max_acceleration_scaling_factor=0.1,
+        execute: bool = False,
+    ):
         """
         Plan a path to a set of joint positions.
 
@@ -210,31 +213,35 @@ class MoveItApi():
         """
         self.fut = Future()
 
-        rclpy.get_global_executor().create_task(self.plan_joint_async(
-            joint_name,
-            joint_values,
-            max_velocity_scaling_factor,
-            max_acceleration_scaling_factor,
-            execute
-        )).add_done_callback(self.done)
+        rclpy.get_global_executor().create_task(
+            self.plan_joint_async(
+                joint_name,
+                joint_values,
+                max_velocity_scaling_factor,
+                max_acceleration_scaling_factor,
+                execute,
+            )
+        ).add_done_callback(self.done)
 
         return self.fut
 
     def done(self, plan_result):
         self.fut.set_result(plan_result)
 
-    async def plan_async(self,
-                         max_velocity_scaling_factor=0.1,
-                         max_acceleration_scaling_factor=0.1,
-                         point: Point = None,
-                         orientation: Quaternion = None,
-                         start_pose: Pose = None,
-                         execute: bool = False,
-                         use_jc: bool = True,
-                         x_tol: float = 0.01,
-                         y_tol: float = 0.01,
-                         z_tol: float = 0.01,
-                         path_constraints: Constraints = None) -> PlanResult:
+    async def plan_async(
+        self,
+        max_velocity_scaling_factor=0.1,
+        max_acceleration_scaling_factor=0.1,
+        point: Point = None,
+        orientation: Quaternion = None,
+        start_pose: Pose = None,
+        execute: bool = False,
+        use_jc: bool = True,
+        x_tol: float = 0.01,
+        y_tol: float = 0.01,
+        z_tol: float = 0.01,
+        path_constraints: Constraints = None,
+    ) -> PlanResult:
         """
         Plan a path to a point and orientation.
 
@@ -255,16 +262,16 @@ class MoveItApi():
         """
         # define goal constraints
         goal_constraint = await self.create_goal_constraint(
-            point, orientation, use_jc=use_jc, x_tol=x_tol, y_tol=y_tol, z_tol=z_tol)
+            point, orientation, use_jc=use_jc, x_tol=x_tol, y_tol=y_tol, z_tol=z_tol
+        )
 
         motion_plan_request = MotionPlanRequest(
             workspace_parameters=WorkspaceParameters(
                 header=Header(
-                    stamp=self.node.get_clock().now().to_msg(),
-                    frame_id=self.base_frame
+                    stamp=self.node.get_clock().now().to_msg(), frame_id=self.base_frame
                 ),
                 min_corner=Vector3(x=-1.0, y=-1.0, z=0.0),
-                max_corner=Vector3(x=1.0, y=1.0, z=1.0)
+                max_corner=Vector3(x=1.0, y=1.0, z=1.0),
             ),
             planner_id="move_group",
             goal_constraints=[goal_constraint],
@@ -293,9 +300,7 @@ class MoveItApi():
 
         goal = MoveGroup.Goal(
             request=motion_plan_request,
-            planning_options=PlanningOptions(
-                plan_only=(not execute)
-            ),
+            planning_options=PlanningOptions(plan_only=(not execute)),
         )
 
         goal_handle = await self.move_group_action_client.send_goal_async(goal)
@@ -306,12 +311,14 @@ class MoveItApi():
         else:
             return PlanResult(ErrorCodes.NO_ERROR, result.planned_trajectory)
 
-    async def plan_joint_async(self,
-                               joint_name: List[str],
-                               joint_values: List[float],
-                               max_velocity_scaling_factor=0.1,
-                               max_acceleration_scaling_factor=0.1,
-                               execute: bool = False) -> PlanResult:
+    async def plan_joint_async(
+        self,
+        joint_name: List[str],
+        joint_values: List[float],
+        max_velocity_scaling_factor=0.1,
+        max_acceleration_scaling_factor=0.1,
+        execute: bool = False,
+    ) -> PlanResult:
         """
         Plan a path to a set of joint positions.
 
@@ -333,23 +340,19 @@ class MoveItApi():
                 joint_name=joint_name[i],
                 position=joint_values[i],
                 tolerance_above=0.01,
-                tolerance_below=0.01
+                tolerance_below=0.01,
             )
             joint_constraints.append(joint_constraint)
         # define goal constraints
-        goal_constraint = Constraints(
-            joint_constraints=joint_constraints
-        )
-        self.node.get_logger().warn(
-            f"Creating Joint Constraint {joint_constraints}")
+        goal_constraint = Constraints(joint_constraints=joint_constraints)
+        self.node.get_logger().warn(f"Creating Joint Constraint {joint_constraints}")
         motion_plan_request = MotionPlanRequest(
             workspace_parameters=WorkspaceParameters(
                 header=Header(
-                    stamp=self.node.get_clock().now().to_msg(),
-                    frame_id=self.base_frame
+                    stamp=self.node.get_clock().now().to_msg(), frame_id=self.base_frame
                 ),
                 min_corner=Vector3(x=-1.0, y=-1.0, z=0.0),
-                max_corner=Vector3(x=1.0, y=1.0, z=1.0)
+                max_corner=Vector3(x=1.0, y=1.0, z=1.0),
             ),
             planner_id="move_group",
             goal_constraints=[goal_constraint],
@@ -362,9 +365,7 @@ class MoveItApi():
 
         goal = MoveGroup.Goal(
             request=motion_plan_request,
-            planning_options=PlanningOptions(
-                plan_only=(not execute)
-            ),
+            planning_options=PlanningOptions(plan_only=(not execute)),
         )
 
         goal_handle = await self.move_group_action_client.send_goal_async(goal)
@@ -375,11 +376,13 @@ class MoveItApi():
         else:
             return PlanResult(ErrorCodes.NO_ERROR, result.planned_trajectory)
 
-    def create_path_constraints(self,
-                                orientation: Quaternion,
-                                x_tol: float = 0.01,
-                                y_tol: float = 0.01,
-                                z_tol: float = 0.01) -> Constraints:
+    def create_path_constraints(
+        self,
+        orientation: Quaternion,
+        x_tol: float = 0.01,
+        y_tol: float = 0.01,
+        z_tol: float = 0.01,
+    ) -> Constraints:
         """
         Creates a trajectory constraint for the motion plan request.
 
@@ -391,14 +394,10 @@ class MoveItApi():
         """
 
         orientation_constraint = self.create_orientation_constraint(
-            orientation,
-            x_tol,
-            y_tol,
-            z_tol)
-
-        constraints = Constraints(
-            orientation_constraints=[orientation_constraint]
+            orientation, x_tol, y_tol, z_tol
         )
+
+        constraints = Constraints(orientation_constraints=[orientation_constraint])
 
         return constraints
 
@@ -417,7 +416,8 @@ class MoveItApi():
         self.execute_trajectory_action_client.wait_for_server()
 
         return self.execute_trajectory_action_client.send_goal_async(
-            ExecuteTrajectory.Goal(trajectory=trajectory))
+            ExecuteTrajectory.Goal(trajectory=trajectory)
+        )
 
     async def get_joint_states(self, pose: Pose) -> Optional[JointState]:
         """
@@ -436,8 +436,7 @@ class MoveItApi():
 
         # Return of -31 means no IK solution
         if results[1].val == -31:
-            self.node.get_logger().error(
-                "No solution found for given start pose")
+            self.node.get_logger().error("No solution found for given start pose")
             return None
         else:
             return results[0].joint_state
@@ -449,7 +448,8 @@ class MoveItApi():
     def get_current_joint_state(self):
         """Gets the current joint states of the robot"""
         return {
-            name: position for name, position in zip(self.joint_state.name, self.joint_state.position)
+            name: position
+            for name, position in zip(self.joint_state.name, self.joint_state.position)
         }
 
     def current_state_to_robot_state(self) -> RobotState:
@@ -458,8 +458,9 @@ class MoveItApi():
         robot_state.joint_state = self.joint_state
         return robot_state
 
-    async def perform_IK_request(self, pose: Pose
-                                 ) -> Tuple[RobotState, MoveItErrorCodes]:
+    async def perform_IK_request(
+        self, pose: Pose
+    ) -> Tuple[RobotState, MoveItErrorCodes]:
         """
         Construct an IK request and calls the service.
 
@@ -482,7 +483,9 @@ class MoveItApi():
         result = await self.ik_client.call_async(request_IK)
         return (result.solution, result.error_code)
 
-    async def create_joint_constraint(self, point: Point, orientation: Quaternion) -> Constraints:
+    async def create_joint_constraint(
+        self, point: Point, orientation: Quaternion
+    ) -> Constraints:
         """
         Construct a joint_constraints message give a point and orientation.
 
@@ -514,24 +517,25 @@ class MoveItApi():
         # convert robot state to joint constraints
         joint_constraints = []
         for i in range(0, len(joint_state.name)):
-
             joint_constraint = JointConstraint(
                 joint_name=joint_state.name[i],
                 position=joint_state.position[i],
                 tolerance_above=0.01,
-                tolerance_below=0.01
+                tolerance_below=0.01,
             )
             joint_constraints.append(joint_constraint)
 
         return joint_constraints
 
-    async def create_goal_constraint(self,
-                                     point: Point,
-                                     orientation: Quaternion,
-                                     x_tol: float = 0.01,
-                                     y_tol: float = 0.01,
-                                     z_tol: float = 0.01,
-                                     use_jc: bool = True) -> Constraints:
+    async def create_goal_constraint(
+        self,
+        point: Point,
+        orientation: Quaternion,
+        x_tol: float = 0.01,
+        y_tol: float = 0.01,
+        z_tol: float = 0.01,
+        use_jc: bool = True,
+    ) -> Constraints:
         """
         Construct a moveit_msgs/Constraint for the end effector using a given quaternion and point.
 
@@ -547,8 +551,7 @@ class MoveItApi():
         """
         if use_jc:
             return Constraints(
-                joint_constraints=await self.create_joint_constraint(
-                    point, orientation)
+                joint_constraints=await self.create_joint_constraint(point, orientation)
             )
         else:
             position_constraints = []
@@ -558,11 +561,13 @@ class MoveItApi():
             orConstraints = []
             if orientation is not None:
                 orConstraints = [
-                    self.create_orientation_constraint(orientation, x_tol, y_tol, z_tol)]
+                    self.create_orientation_constraint(orientation, x_tol, y_tol, z_tol)
+                ]
 
-            return Constraints(position_constraints=position_constraints,
-                               orientation_constraints=orConstraints,
-                               )
+            return Constraints(
+                position_constraints=position_constraints,
+                orientation_constraints=orConstraints,
+            )
 
     def create_position_constraint(self, point: Point) -> PositionConstraint:
         """
@@ -578,40 +583,34 @@ class MoveItApi():
         """
         # create sphere primitive representing goal pose region
         dimensions = [0.005]
-        primitive = SolidPrimitive(
-            type=SolidPrimitive.SPHERE,
-            dimensions=dimensions
-        )
+        primitive = SolidPrimitive(type=SolidPrimitive.SPHERE, dimensions=dimensions)
 
         pose = Pose(position=point)
 
         # create bounding volume
-        volume = BoundingVolume(
-            primitives=[primitive],
-            primitive_poses=[pose]
-        )
+        volume = BoundingVolume(primitives=[primitive], primitive_poses=[pose])
 
-        self.node.get_logger().warn(
-            f"position link name {self.end_effector_frame}")
+        self.node.get_logger().warn(f"position link name {self.end_effector_frame}")
 
         # create position constraint
         position_constraint = PositionConstraint(
             header=Header(
-                frame_id=self.base_frame,
-                stamp=self.node.get_clock().now().to_msg()
+                frame_id=self.base_frame, stamp=self.node.get_clock().now().to_msg()
             ),
             target_point_offset=Vector3(),
             link_name=self.end_effector_frame,
             constraint_region=volume,
-            weight=1.0
+            weight=1.0,
         )
         return position_constraint
 
-    def create_orientation_constraint(self,
-                                      orientation: Quaternion,
-                                      x_tol: float = 0.01,
-                                      y_tol: float = 0.01,
-                                      z_tol: float = 0.01) -> OrientationConstraint:
+    def create_orientation_constraint(
+        self,
+        orientation: Quaternion,
+        x_tol: float = 0.01,
+        y_tol: float = 0.01,
+        z_tol: float = 0.01,
+    ) -> OrientationConstraint:
         """
         Construct a moveit_msgs/OrientationConstraint for the end effector using a quaternion.
 
@@ -623,17 +622,20 @@ class MoveItApi():
             OrientationConstraint message type
 
         """
-        header = Header(frame_id=self.base_frame,
-                        stamp=self.node.get_clock().now().to_msg())
+        header = Header(
+            frame_id=self.base_frame, stamp=self.node.get_clock().now().to_msg()
+        )
         link_name = self.end_effector_frame
 
-        return OrientationConstraint(header=header,
-                                     link_name=link_name,
-                                     orientation=orientation,
-                                     weight=1.0,
-                                     absolute_x_axis_tolerance=x_tol,
-                                     absolute_y_axis_tolerance=y_tol,
-                                     absolute_z_axis_tolerance=z_tol)
+        return OrientationConstraint(
+            header=header,
+            link_name=link_name,
+            orientation=orientation,
+            weight=1.0,
+            absolute_x_axis_tolerance=x_tol,
+            absolute_y_axis_tolerance=y_tol,
+            absolute_z_axis_tolerance=z_tol,
+        )
 
     async def get_end_effector_pose(self) -> PoseStamped:
         """
@@ -645,21 +647,19 @@ class MoveItApi():
 
         """
         ee_tf = await self.tf_buffer.lookup_transform_async(
-            self.base_frame, self.end_effector_frame, Time(seconds=0))
+            self.base_frame, self.end_effector_frame, Time(seconds=0)
+        )
 
         return PoseStamped(
-            header=Header(
-                frame_id=ee_tf.header.frame_id,
-                stamp=ee_tf.header.stamp
-            ),
+            header=Header(frame_id=ee_tf.header.frame_id, stamp=ee_tf.header.stamp),
             pose=Pose(
                 position=Point(
                     x=ee_tf.transform.translation.x,
                     y=ee_tf.transform.translation.y,
                     z=ee_tf.transform.translation.z,
                 ),
-                orientation=ee_tf.transform.rotation
-            )
+                orientation=ee_tf.transform.rotation,
+            ),
         )
 
     def spawn_box(self, pose: Pose, size: Vector3, name: str):
@@ -679,20 +679,18 @@ class MoveItApi():
         """
         # create primitive box
         primitive = SolidPrimitive(
-            type=SolidPrimitive.BOX,
-            dimensions=[size.x, size.y, size.z]
+            type=SolidPrimitive.BOX, dimensions=[size.x, size.y, size.z]
         )
 
         # create collision object
         collision_object = CollisionObject(
             header=Header(
-                frame_id=self.base_frame,
-                stamp=self.node.get_clock().now().to_msg()
+                frame_id=self.base_frame, stamp=self.node.get_clock().now().to_msg()
             ),
             id=name,
             primitive_poses=[pose],
             primitives=[primitive],
-            operation=CollisionObject.ADD
+            operation=CollisionObject.ADD,
         )
 
         # add the collision object to the planning scene
@@ -703,12 +701,14 @@ class MoveItApi():
         planning_scene.world.collision_objects.append(collision_object)
         self.planning_scene_publisher.publish(planning_scene)
 
-    async def create_cartesian_path(self,
-                                    waypoints: list[Pose],
-                                    start_state: RobotState = None,
-                                    max_velocity_scaling_factor: float = 0.1,
-                                    max_acceleration_scaling_factor: float = 0.1,
-                                    orienation_constraint: Quaternion = None) -> PlanResult:
+    async def create_cartesian_path(
+        self,
+        waypoints: list[Pose],
+        start_state: RobotState = None,
+        max_velocity_scaling_factor: float = 0.1,
+        max_acceleration_scaling_factor: float = 0.1,
+        orienation_constraint: Quaternion = None,
+    ) -> PlanResult:
         """
         Construct a robot trajectory given a list of waypoints
 
@@ -768,15 +768,22 @@ class MoveItApi():
         else:
             error = ErrorCodes.NO_ERROR
 
-        return PlanResult(error_code=error,
-                          trajectory=result.solution,
-                          moveiterror=result.error_code)
+        return PlanResult(
+            error_code=error, trajectory=result.solution, moveiterror=result.error_code
+        )
 
     async def go_home(self):
         # home the panda
         await self.plan_joint_async(
-            ["panda_joint1", "panda_joint2", "panda_joint3",
-                "panda_joint4", "panda_joint5", "panda_joint6", "panda_joint7"],
-            [0.0, -np.pi / 4.0, 0.0, -3*np.pi / 4.0, 0.0, np.pi / 2.0, np.pi / 4.0],
-            execute=True
+            [
+                "panda_joint1",
+                "panda_joint2",
+                "panda_joint3",
+                "panda_joint4",
+                "panda_joint5",
+                "panda_joint6",
+                "panda_joint7",
+            ],
+            [0.0, -np.pi / 4.0, 0.0, -3 * np.pi / 4.0, 0.0, np.pi / 2.0, np.pi / 4.0],
+            execute=True,
         )

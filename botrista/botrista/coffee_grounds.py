@@ -1,8 +1,10 @@
 """
-Manages the scoop action, which picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
+Manages the scoop action, which picks up the scoop,
+moves to the coffee pot, dumps the coffee, then returns the scoop
 
 Action Clients:
-  + grasp_process (GraspProcess) - A seriers of movements and gripper commands for the robot to complete a grasp action
+  + grasp_process (GraspProcess) - A seriers of movements and gripper commands
+                                   for the robot to complete a grasp action
 
 Action Servers:
   + scoop (EmptyAction) - The scooping routine
@@ -26,7 +28,7 @@ from tf2_ros import TransformListener, Buffer
 from botrista_interfaces.action import EmptyAction
 from botrista_interfaces.action import GraspProcess
 from rclpy.time import Time
-from moveit_wrapper.grasp_planner import GraspPlanner, GraspPlan
+from moveit_wrapper.grasp_planner import GraspPlanner
 
 
 class CoffeeGrounds(Node):
@@ -276,7 +278,7 @@ class CoffeeGrounds(Node):
             tf = self.buffer.lookup_transform(
                 "panda_link0", "filtered_coffee_scoop", Time(seconds=0.0))
 
-        except Exception as e:
+        except Exception:
             self.get_logger().error("No transform found")
             return
 

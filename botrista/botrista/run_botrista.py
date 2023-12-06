@@ -1,5 +1,6 @@
 """
-Manages the scoop action, which picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
+Manages the scoop action, which picks up the scoop
+moves to the coffee pot, dumps the coffee, then returns the scoop
 
 Subscriptions:
   + coffee_start (Empty) - to start the entire progress
@@ -160,68 +161,65 @@ class Botrista(Node):
         # 2. Pick up Filter from filter stand (pick_filter action)
         goal2 = EmptyAction.Goal()
         result = await self.action_client_pick_filter.send_goal_async(goal2)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         # 3. Place Filter on Pot (place_filter_in_pot action)
         goal3 = EmptyAction.Goal()
         result = await self.action_client_place_filter_in_pot.send_goal_async(goal3)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         # 4. Scoop grounds (scoop action)
         goal4 = EmptyAction.Goal()
         result = await self.action_client_scoop.send_goal_async(goal4)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         # # 5. Wait for boiling
         # 6. Pick up Kettle (pick_kettle action)
         goal6 = EmptyAction.Goal()
         result = await self.action_client_pick_kettle.send_goal_async(goal6)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         # # 7. Pour water from kettle (pour_action action)
         goal7 = EmptyAction.Goal()
         result = await self.action_client_pour_kettle.send_goal_async(goal7)
-        res = await result.get_result_async()
-        self.get_logger().warn(f"Finished 7")
+        await result.get_result_async()
 
         # 8. Place Kettle on kettle stand (place_kettle action)
         goal8 = EmptyAction.Goal()
         result = await self.action_client_place_kettle.send_goal_async(goal8)
-        res = await result.get_result_async()
+        await result.get_result_async()
         await self.moveit_api.go_home()
-        self.get_logger().warn(f"Finished 8")
         await self.delay_client.call_async(DelayTime.Request(time=10.0))
 
         # 9. Wait for coffee grounds to soak
         # 10. Pick up Filter from Pot (pick_filter_in_pot action)
         goal10 = EmptyAction.Goal()
         result = await self.action_client_pick_filter_in_pot.send_goal_async(goal10)
-        res = await result.get_result_async()
-        self.get_logger().warn(f"Finished 10")
+        await result.get_result_async()
 
         # 11. Place Filter on filter stand (place_filter action)
         goal11 = EmptyAction.Goal()
         result = await self.action_client_place_filter.send_goal_async(goal11)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         await self.moveit_api.go_home()
 
         # 12. Pick up Pot from pot stand (pick_pot action)
         goal12 = EmptyAction.Goal()
         result = await self.action_client_pick_pot.send_goal_async(goal12)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         # 13. Pour Coffee (pour_action action)
         goal13 = EmptyAction.Goal()
         result = await self.pour_pot_client.send_goal_async(goal13)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         await self.moveit_api.go_home()
 
         # 14. Put Pot on pot stand (place_pot action)
         goal14 = EmptyAction.Goal()
         result = await self.action_client_place_pot.send_goal_async(goal14)
-        res = await result.get_result_async()
+        await result.get_result_async()
 
         await self.moveit_api.go_home()
 

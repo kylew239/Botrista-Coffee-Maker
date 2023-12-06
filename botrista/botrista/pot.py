@@ -287,7 +287,7 @@ class Pot(Node):
         await self.moveit_api.plan_joint_async(names, pos, execute=True)
 
         # Approach
-        result = await self.moveit_api.plan_async(
+        await self.moveit_api.plan_async(
             point=approach_pose.position,
             orientation=approach_pose.orientation,
             execute=True,
@@ -295,7 +295,7 @@ class Pot(Node):
 
         # Pouring pose 1
         self.get_logger().info(f"Pouring: {pour_pose.position} {pour_pose.orientation}")
-        result = await self.moveit_api.plan_async(
+        await self.moveit_api.plan_async(
             point=pour_pose.position, orientation=pour_pose.orientation, execute=True
         )
 
@@ -303,7 +303,7 @@ class Pot(Node):
         self.get_logger().info(
             f"Pouring: {pour_pose_2.position} {pour_pose_2.orientation}"
         )
-        result = await self.moveit_api.plan_async(
+        await self.moveit_api.plan_async(
             point=pour_pose_2.position,
             orientation=pour_pose_2.orientation,
             execute=True,
@@ -313,12 +313,12 @@ class Pot(Node):
 
         # Returning Pouring pose 1
         self.get_logger().info(f"Pouring: {pour_pose.position} {pour_pose.orientation}")
-        result = await self.moveit_api.plan_async(
+        await self.moveit_api.plan_async(
             point=pour_pose.position, orientation=pour_pose.orientation, execute=True
         )
 
-        # Retreat Pose
-        result = await self.moveit_api.plan_async(
+        # Retreat
+        await self.moveit_api.plan_async(
             point=retreat_pose.position,
             orientation=retreat_pose.orientation,
             execute=True,

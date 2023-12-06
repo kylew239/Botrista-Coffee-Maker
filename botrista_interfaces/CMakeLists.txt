@@ -15,13 +15,13 @@ find_package(franka_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-     "action/PourAction.action" # Whatever message file you've defined
-     "action/GraspProcess.action"
-     "action/EmptyAction.action"
-     "action/GroundsAction.action"
-     "srv/DelayTime.srv"
-     DEPENDENCIES geometry_msgs franka_msgs
-     )
+    "action/PourAction.action" # Whatever message file you've defined
+    "action/GraspProcess.action"
+    "action/EmptyAction.action"
+    "action/GroundsAction.action"
+    "srv/DelayTime.srv"
+    DEPENDENCIES geometry_msgs franka_msgs
+    )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

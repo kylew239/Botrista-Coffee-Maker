@@ -9,6 +9,7 @@ Client
   + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
 
 """
+
 import rclpy
 from rclpy.node import Node
 import tf2_geometry_msgs
@@ -57,8 +58,13 @@ class GraspNode(Node):
         }
 
     async def grasp_process(self, goal_handle):
-        """
-        Grabs a specified object.
+        """Grabs a specified object
+
+        Args:
+            goal_handle (Empty_Goal): goal of the action
+
+        Returns:
+            Empty_result: result of the action
         """
         self.get_logger().warn("GRASP PROCESS")
 
