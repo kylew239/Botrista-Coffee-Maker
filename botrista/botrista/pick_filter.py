@@ -4,7 +4,7 @@ Node which include actions to pick up filter and place filter
 Uses the wrapper class made in moveitapi. Moveit moves the robot to various points
 and controls the gripper as well.
 
-SERVICES:
+Action Servers:
   + pick_filter (botrista_interfaces/action/Emptyaction) - pick up filter
   + place_filter (botrista_interfaces/action/Emptyaction) - place filter back to the filter stand
   + place_filter_in_pot (botrista_interfaces/action/Emptyaction) - place the filter on pot
