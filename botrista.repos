@@ -1,0 +1,9 @@
+repositories:
+  final-project-CarterDiOrio:
+    type: git
+    url: git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git
+    version: main
+  realsense-ros:
+    type: git
+    url: git@github.com:IntelRealSense/realsense-ros.git
+    version: ros2-development
