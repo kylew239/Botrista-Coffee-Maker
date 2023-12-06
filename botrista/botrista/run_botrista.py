@@ -1,28 +1,42 @@
-"""
-Manages the scoop action, which picks up the scoop
-moves to the coffee pot, dumps the coffee, then returns the scoop
+"""Manges the main make_coffee action and routine.
+
+Coffee routine is as follows:
+1. Waits to detect an empty cup placed in the detection area (coffee_start subscriber)
+2. Pick up Filter from filter stand (pick_filter action)
+3. Place Filter on Pot (place_filter_in_pot action)
+4. Pick up scoop and dump coffee grounds in filter (scoop action)
+5. Wait for boiling
+6. Pick up Kettle (pick_kettle action)
+7. Pour water from kettle (pour_action action)
+8. Place Kettle on kettle stand (place_kettle action)
+9. Wait for coffee grounds to soak
+10. Pick up Filter from Pot (pick_filter_in_pot action)
+11. Place Filter on filter stand (place_filter action)
+12. Pick up Pot from pot stand (pick_pot action)
+13. Pour Coffee (pour_action action)
+14. Put Pot on pot stand (place_pot action)
 
 Subscriptions:
-  + coffee_start (Empty) - to start the entire progress
+  coffee_start (Empty) - indicates that a cup has been dectected and the robot should start making coffee
 
 Service Clients:
-  + delay (DelayTime) - timer for delay in seconds.
+  delay (DelayTime) - allows for delays between steps
 
 Action Clients:
-  + pick_kettle (EmptyAction) - pick up kettle
-  + place_kettle (EmptyAction) - place kettle
-  + pick_pot (EmptyAction) - pick up pot
-  + place_pot (EmptyAction) - place pot
-  + pour_kettle (EmptyAction) - pour water into the pot
-  + scoop (EmptyAction) - The scooping routine
-  + pick_filter (EmptyAction) - pick up filter
-  + place_filter (EmptyAction) - place filter back to the filter stand
-  + place_filter_in_pot (EmptyAction) - place the filter on pot
-  + pick_filter_in_pot (EmptyAction) - pick up the filter from the pot
-  + pour_pot (EmptyAction) - pour coffer to the cup
+  pick_kettle (EmptyAction) - picks up the kettle
+  place_kettle (EmptyAction) - places the kettle
+  pick_pot (EmptyAction) - picks up the pot
+  place_pot (EmptyAction) - places the pot 
+  pour_kettle (EmptyAction) - pours the kettle
+  scoop (EmptyAction) - picks up the scoop, move it to the pot, dumps the grounds, the puts the scoop back
+  pick_filter (EmptyAction) - picks up the filter from its holder
+  place_filter (EmptyAction) - places the filter on its holder
+  place_filter_in_pot (EmptyAction) - places the filter in the pot
+  pick_filter_in_pot (EmptyAction) - picks up the filter from the pot
+  pour_pot (EmptyAction) - pours the coffee from the pot to the cup
 
 Action Servers:
-  + make_coffee (EmptyAction) - The routine to make a cup of coffee
+  make_coffee (EmptyAction) - The routine to make a cup of coffee
 """
 import rclpy
 from rclpy.node import Node
@@ -35,25 +49,9 @@ from rclpy.action import ActionClient
 
 
 class Botrista(Node):
-    """
-    Description:
-        Waits to detect an empty cup placed in the detection area, then runs following routine:
-            2. Pick up Filter from filter stand (pick_filter action)
-            3. Place Filter on Pot (place_filter_in_pot action)
-            4. Pick up scoop and dump coffee grounds in filter (scoop action)
-            5. Wait for boiling
-            6. Pick up Kettle (pick_kettle action)
-            7. Pour water from kettle (pour_action action)
-            8. Place Kettle on kettle stand (place_kettle action)
-            9. Wait for coffee grounds to soak
-            10. Pick up Filter from Pot (pick_filter_in_pot action)
-            11. Place Filter on filter stand (place_filter action)
-            12. Pick up Pot from pot stand (pick_pot action)
-            13. Pour Coffee (pour_action action)
-            14. Put Pot on pot stand (place_pot action)
-    """
-
     def __init__(self):
+        """Initializes the botrista node.
+        """
         super().__init__("botrista")
 
         # start action client for pick_kettle action
@@ -143,9 +141,7 @@ class Botrista(Node):
         self.has_started = False
 
     async def start_coffee_callback(self, msg):
-        """
-        Description:
-            Callback function for the coffee_start subscriber. Triggers the make_coffee routine.
+        """Callback function for the coffee_start subscriber. Triggers the make_coffee routine.
         """
         if not self.has_started:
             self.get_logger().warn("Starting coffee routine")
@@ -153,9 +149,7 @@ class Botrista(Node):
             await self.make_coffee()
 
     async def make_coffee(self):
-        """
-        Description:
-            Calls the actions required to make a cup of coffee in order.
+        """Calls the actions required to make a cup of coffee in order.
         """
         # 1. Turns on Kettle (action)
         # 2. Pick up Filter from filter stand (pick_filter action)

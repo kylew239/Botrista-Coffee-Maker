@@ -1,13 +1,12 @@
-"""
-Manages the scoop action, which picks up the scoop,
-moves to the coffee pot, dumps the coffee, then returns the scoop
+"""Manages the scoop action.
+
+The scoop action picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
 
 Action Clients:
-  + grasp_process (GraspProcess) - A seriers of movements and gripper commands
-                                   for the robot to complete a grasp action
+  grasp_process (GraspProcess): A seriers of movements and gripper commands for the robot to complete a grasp action
 
 Action Servers:
-  + scoop (EmptyAction) - The scooping routine
+  scoop (EmptyAction): The scooping routine
 """
 
 from rclpy.node import Node
@@ -32,15 +31,12 @@ from moveit_wrapper.grasp_planner import GraspPlanner
 
 
 class CoffeeGrounds(Node):
-    """
-    Measures coffee depth, scoops coffee, and dumps coffee in coffee maker.
-    Also dumps used coffee grounds from filter.
-    """
+    """Manages the scoop action.
 
+    The scoop action picks up the scoop, moves to the coffee pot, dumps the coffee, then returns the scoop
+    """
     def __init__(self):
-        """
-        Description:
-            Initializes the CoffeeGrounds node
+        """Initializes the CoffeeGrounds node
         """
         super().__init__('coffee_grounds')
 
@@ -141,9 +137,7 @@ class CoffeeGrounds(Node):
             self.moveit_api, "panda_gripper/grasp")
 
     async def scoop_coffee_grounds(self, goal_handle):
-        """
-        Description:
-            Action callback for the scooping routine, scoops coffee and dumps it in the filter
+        """Action callback for the scooping routine, scoops coffee and dumps it in the filter
         """
         await self.grab_scoop()
         # await self.scoop_grounds()
@@ -157,9 +151,7 @@ class CoffeeGrounds(Node):
         return EmptyAction.Result()
 
     async def move_to_pot(self):
-        """
-        Description:
-            Moves the scoop to the pot to dump grounds.
+        """Moves the scoop to the pot to dump grounds.
         """
 
         # Create horizontal path constraint
@@ -174,14 +166,7 @@ class CoffeeGrounds(Node):
         # Get the pot top pose
         pot_tf = await self.buffer.lookup_transform_async(
             "panda_link0", "pot_top", Time())
-
-        # self.dump_pose_approach.orientation = Quaternion(
-        #     x=-0.6987058,
-        #     y=0.0,
-        #     z=-0.2329019,
-        #     w=0.6764369
-        # )
-
+        
         self.dump_pose_approach.orientation = Quaternion(
             x=-0.819152,
             y=0.0,
@@ -270,9 +255,7 @@ class CoffeeGrounds(Node):
         )
 
     async def grab_scoop(self):
-        """
-        Description:
-            Function to pick up the coffee scoop
+        """Function to pick up the coffee scoop.
         """
         try:
             tf = self.buffer.lookup_transform(
@@ -304,9 +287,7 @@ class CoffeeGrounds(Node):
         self.scoop_actual_pickup_pose = res.result.actual_grasp_pose
 
     async def scoop_grounds(self):
-        """
-        Description:
-            Function to scoop coffee grounds from the coffee pot
+        """Function to scoop coffee grounds from the coffee pot
         """
         tf = self.buffer.lookup_transform(
             "panda_link0", "filtered_coffee_grounds", Time())
@@ -341,9 +322,7 @@ class CoffeeGrounds(Node):
         )
 
     async def return_scoop(self):
-        """
-        Description:
-            Function to place the coffee scoop on the scoop tower
+        """Function to place the coffee scoop on the scoop tower
         """
         approach_pose = Pose(
             position=Point(x=0.0, y=-0.20, z=0.0),

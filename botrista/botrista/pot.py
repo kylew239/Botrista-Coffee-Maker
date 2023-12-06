@@ -4,13 +4,12 @@ Node which include actions to pick up, place and pour pot
 Uses the wrapper class made in moveitapi. Moveit moves the robot to various points
 and controls the gripper as well.
 
-Action Servers:
+Services Offered:
   + pick_pot (botrista_interfaces/action/Emptyaction) - pick up pot
   + place_pot (botrista_interfaces/action/Emptyaction) - place pot
   + pour_pot (botrista_interfaces/action/Emptyaction) - pour coffee to the cup
 
-Client
-------
+Service Clients:
   + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
   + grasp_process (botrista_interfaces/action/GraspProcess) - timer for delay in seconds.
 
