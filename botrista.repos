@@ -1,7 +1,7 @@
 repositories:
-  final-project-CarterDiOrio:
+  Botrista:
     type: git
-    url: git@github.com:ME495-EmbeddedSystems/final-project-CarterDiOrio.git
+    url: git@github.com:ME495-EmbeddedSystems/Botrista.git
     version: main
   realsense-ros:
     type: git
