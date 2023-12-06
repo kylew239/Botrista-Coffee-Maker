@@ -23,7 +23,7 @@ class Botrista(Node):
             1. Turns on Kettle (action)
             2. Pick up Filter from filter stand (pick_filter action)
             3. Place Filter on Pot (place_filter_in_pot action)
-            4. Scoop grounds (scoop action)
+            4. Pick up scoop and dump coffee grounds in filter (scoop action)
             5. Wait for boiling
             6. Pick up Kettle (pick_kettle action)
             7. Pour water from kettle (pour_action action)

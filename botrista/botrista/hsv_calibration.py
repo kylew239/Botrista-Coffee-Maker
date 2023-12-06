@@ -7,6 +7,10 @@ def nothing(x):
     pass
 
 
+"""
+This file is used for tuning the settings of the realsense camera. 
+"""
+
 pipeline = rs.pipeline()
 config = rs.config()
 pipeline_wrapper = rs.pipeline_wrapper(pipeline)
