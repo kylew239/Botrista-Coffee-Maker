@@ -5,15 +5,14 @@ Uses the wrapper class made in moveitapi. Moveit moves the robot to various poin
 and controls the gripper as well.
 
 Action Servers:
-  + pick_filter (botrista_interfaces/action/Emptyaction) - pick up filter
-  + place_filter (botrista_interfaces/action/Emptyaction) - place filter back to the filter stand
-  + place_filter_in_pot (botrista_interfaces/action/Emptyaction) - place the filter on pot
-  + pick_filter_in_pot (botrista_interfaces/action/Emptyaction) - pick up the filter from the pot
+  pick_filter (botrista_interfaces/action/Emptyaction) - pick up filter
+  place_filter (botrista_interfaces/action/Emptyaction) - place filter back to the filter stand
+  place_filter_in_pot (botrista_interfaces/action/Emptyaction) - place the filter on pot
+  pick_filter_in_pot (botrista_interfaces/action/Emptyaction) - pick up the filter from the pot
 
 Client
-------
-  + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
-  + grasp_process (botrista_interfaces/action/GraspProcess) - timer for delay in seconds.
+  delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
+  grasp_process (botrista_interfaces/action/GraspProcess) - timer for delay in seconds.
 
 """
 

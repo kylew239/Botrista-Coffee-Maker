@@ -5,13 +5,13 @@ Uses the wrapper class made in moveitapi. Moveit moves the robot to various poin
 and controls the gripper as well.
 
 Services Offered:
-  + pick_pot (botrista_interfaces/action/Emptyaction) - pick up pot
-  + place_pot (botrista_interfaces/action/Emptyaction) - place pot
-  + pour_pot (botrista_interfaces/action/Emptyaction) - pour coffee to the cup
+  pick_pot (botrista_interfaces/action/Emptyaction) - pick up pot
+  place_pot (botrista_interfaces/action/Emptyaction) - place pot
+  pour_pot (botrista_interfaces/action/Emptyaction) - pour coffee to the cup
 
 Service Clients:
-  + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
-  + grasp_process (botrista_interfaces/action/GraspProcess) - timer for delay in seconds.
+  delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
+  grasp_process (botrista_interfaces/action/GraspProcess) - timer for delay in seconds.
 
 """
 
