@@ -14,7 +14,7 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 
 ## Nodes:
 ### botrista Package:
-- camera_localizer: localizes the d435 and d45 cameras and publishes transforms for april tags seen by the cameras from the robot base
+- camera_localizer: localizes the d435 and d405 cameras and publishes transforms for april tags seen by the cameras from the robot base
 - coffee_grounds: controls the actions for picking up and dumping the coffee scoop
 - cup_detection: handles detection of the coffee cup in the cup holder and triggers the rest of the routine. also publishes a transform to the top of the coffee cup
 - delay_node: handles the delay service which is used to pause the robot for a specified time at certain points in the routine
