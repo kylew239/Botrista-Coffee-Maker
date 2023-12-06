@@ -1,8 +1,8 @@
 """
 Offers a service that allows the robot to wait for a specified amount of time.
 
-Services Offered:
-    + delay (DelayTime) - pauses for a specified amount of time.
+Services:
+    + delay (DelayTime): pauses for a specified amount of time.
 """
 import rclpy
 from rclpy.node import Node
@@ -16,18 +16,21 @@ class Delay_Node(Node):
         """Initialize the delay_node."""
         super().__init__("delay_node")
         self.delay_timer = self.create_service(
-            DelayTime, "delay", self.delay_callback, callback_group=ReentrantCallbackGroup())
+            DelayTime,
+            "delay",
+            self.delay_callback,
+            callback_group=ReentrantCallbackGroup(),
+        )
 
     def delay_callback(self, request, response):
         """
         Delays for the requested amount of time.
 
-        Keyword Arguments:
-            + request (botrista_interfaces_srv/DelayTime)-- Delay time.
+        Args:
+            request (botrista_interfaces_srv/DelayTime): Time of delay.
 
-        Returns
-        -------
-            + Empty return
+        Returns:
+            None
 
         """
         sleep(request.time)

@@ -1,31 +1,25 @@
 """
 Node which detects if there is a cup and starts the entire the coffee making process.
 
-Listens to the tf_listener and broadcasts a transform for the cups top.
+Parameters:
+  + lower_mask (Integer List): lower mask used to detect the cup.
+  + upper_mask (Integer List): higher mask used to detect the cup.
 
-Uses the wrapper class made in moveitapi. Moveit moves the robot to various points
-and controls the gripper as well.
-
-Parameters
-----------
-  + lower_mask (Integer List) - lower mask used to detect the cup.
-  + upper_mask (Integer List) - higher mask used to detect the cup.
-
-Subscriptions
--------------
-  + image_rect_color (sensor_msgs/Image) - images published by the d435 camera.
-  + camera_info (sensor_msgs/CameraInfo) - intrinsic info about the d435 camera.
-  + restart_coffee (std_msgs/Empty) - resets the state machine to look for the cup to
+Subscriptions:
+  + image_rect_color (sensor_msgs/Image): images published by the d435 camera.
+  + camera_info (sensor_msgs/CameraInfo): intrinsic info about the d435 camera.
+  + restart_coffee (std_msgs/Empty): resets the state machine to look for the cup to
     start coffee making process again
 
-Publishes
----------
-  + cup_image (sensor_msgs/Image) - image after processing showing the cup location.
-  + coffee_start (std_msgs/Empty) - sends a message to the topic to start making coffee.
+Publishes:
+  + cup_image (sensor_msgs/Image): image after processing showing the cup location.
+  + coffee_start (std_msgs/Empty): sends a message to the topic to start making coffee.
 
-Client
-------
-  + delay (botrista_interfaces/DelayTime) - timer for delay in seconds.
+Client:
+  + delay (botrista_interfaces/DelayTime): timer for delay in seconds.
+
+Transforms:
+    + cup_location (geometry_msgs/TransformStamped): the transform to the cup top.
 
 """
 
@@ -165,12 +159,11 @@ class CupDetection(Node):
         """
         Start the coffee making process.
 
-        Keyword Arguments:
-            msg (geometry_msgs/Empty)-- Empty message to start the state.
+        Args:
+            msg (geometry_msgs/Empty): Empty message to start the state.
 
-        Returns
-        -------
-            Empty return
+        Returns:
+            None
 
         """
         self.state = State.START
@@ -179,12 +172,11 @@ class CupDetection(Node):
         """
         Set the camera info.
 
-        Keyword Arguments:
-            + cam_info (sensor_msgs/CameraInfo)-- Intrinsic points of the camera.
+        Args:
+            cam_info (sensor_msgs/CameraInfo): Intrinsic points of the camera.
 
-        Returns
-        -------
-            + Empty return
+        Returns:
+            None
 
         """
         self.cam.fromCameraInfo(cam_info)
@@ -193,14 +185,11 @@ class CupDetection(Node):
         """
         Process the image and gets the pixel to tf of the center of the cup.
 
-        Once the tf is found, changes state.
+        Args:
+            Image (sensor_msgs/Image): Image of the camera.
 
-        Keyword Arguments:
-            + Image (sensor_msgs/Image)-- Image of the camera.
-
-        Returns
-        -------
-            + Empty return
+        Returns:
+            None
 
         """
         try:
