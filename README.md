@@ -1,7 +1,11 @@
 # ME495 Final Project - Group 1 - Botrista
 
 ## Authors: 
-Stephen Ferro, Anuj Natraj, Carter DiOrio, Kyle Wang, and Jihai Zhao
+* [Stephen Ferro](https://scferro.github.io)
+* [Carter DiOrio](https://www.cdiorio.dev)
+* [Anuj Natraj](https://anujn9.github.io/)
+* [Jihai Zhao](https://jihaizhao.github.io/)
+* [Kyle Wang](https://kylew239.github.io/)
 
 ## Description: 
 A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup of pour over coffee. 
