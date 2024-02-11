@@ -4,8 +4,9 @@
 * [Stephen Ferro](https://scferro.github.io)
 * [Carter DiOrio](https://www.cdiorio.dev)
 * [Anuj Natraj](https://anujn9.github.io/)
-* [Jihai Zhao](https://jihaizhao.github.io/)
 * [Kyle Wang](https://kylew239.github.io/)
+* [Jihai Zhao](https://jihaizhao.github.io/)
+
 
 ## Description: 
 A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup of pour over coffee. 
