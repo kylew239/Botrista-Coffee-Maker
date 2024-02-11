@@ -6,12 +6,6 @@ Stephen Ferro, Anuj Natraj, Carter DiOrio, Kyle Wang, and Jihai Zhao
 ## Description: 
 A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup of pour over coffee. 
 
-## Quickstart Instructions:
-1. Use the command `git clone git@github.com:ME495-EmbeddedSystems/Botrista.git` in the terminal to clone the repositiory into the 'src' directory of a new ROS2 workspace.
-2. Build and source the workspace.
-3. After building and sourcing the workspace, launch rviz and the required nodes using "ros2 launch botrista botrista.launch.py" .
-4. To start the coffee-making routine, place a white cup in the purple cup holder in front of the robot. The robot will detect the cup and beign making coffee.
-
 ## Nodes:
 ### botrista Package:
 - `camera_localizer`: localizes the d435 and d405 cameras and publishes transforms for april tags seen by the cameras from the robot base
@@ -34,7 +28,7 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 - `open_franka.launch.xml`: Launches moveit and RViz for the Franka arm.
 - `realsense.launch.py`: Launches both the d435i and the d405, the april tag node, and the camera_localizer node.
 
-## 'make_coffee' Routine High Level Overview:
+## `make_coffee` Routine High Level Overview:
 This system is essentially a series of service and action calls which cause the robot to brew coffee when called in order.
 1. The cup_detection node wait until it detects an empty cup placed in the detection area, then publishes a message on the 'coffee_start' topic, which cuases the run_botrista node to start the routine
 2. Picks up the Filter from filter stand using the pick_filter action
