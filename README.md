@@ -14,25 +14,25 @@ A collection of ROS2 packages to drive the Emika Franka robot arm to brew a cup 
 
 ## Nodes:
 ### botrista Package:
-- camera_localizer: localizes the d435 and d405 cameras and publishes transforms for april tags seen by the cameras from the robot base
-- coffee_grounds: controls the actions for picking up and dumping the coffee scoop
-- cup_detection: handles detection of the coffee cup in the cup holder and triggers the rest of the routine. also publishes a transform to the top of the coffee cup
-- delay_node: handles the delay service which is used to pause the robot for a specified time at certain points in the routine
-- grasp_node: offers the grasp_process action, which is used to grap the "standard" handle used for the kettle, pot, and filter
-- handle_detector: tracks the blue and green tape on the handles of the objects using the d405 camera and publishes a tf for the object handle
-- kettle: handles action for picking up, pouring, and placing the kettle
-- pick_filter: offers the action to pick up the coffee filter
-- pot: handles action for picking up, pouring, and placing the coffee pot
-- pouring: offers the pour action, which is used by the kettle to create spiral motions
-- run_botrista: the main node which offers the make_coffee action
+- `camera_localizer`: localizes the d435 and d405 cameras and publishes transforms for april tags seen by the cameras from the robot base
+- `coffee_grounds`: controls the actions for picking up and dumping the coffee scoop
+- `cup_detection`: handles detection of the coffee cup in the cup holder and triggers the rest of the routine. also publishes a transform to the top of the coffee cup
+- `delay_node`: handles the delay service which is used to pause the robot for a specified time at certain points in the routine
+- `grasp_node`: offers the grasp_process action, which is used to grap the "standard" handle used for the kettle, pot, and filter
+- `handle_detector`: tracks the blue and green tape on the handles of the objects using the d405 camera and publishes a tf for the object handle
+- `kettle`: handles action for picking up, pouring, and placing the kettle
+- `pick_filter`: offers the action to pick up the coffee filter
+- `pot`: handles action for picking up, pouring, and placing the coffee pot
+- `pouring`: offers the pour action, which is used by the kettle to create spiral motions
+- `run_botrista`: the main node which offers the make_coffee action
 ### moveit_wrapper package
-- grasp_planner: handles planning and execution of grasp actions
-- moveitapi: a wrapper class for sending moveit commands to a robot like the Franka
+- `grasp_planner`: handles planning and execution of grasp actions
+- `moveitapi`: a wrapper class for sending moveit commands to a robot like the Franka
 
 ## Launchfiles:
-- botrista.launch.py: the main launchfile to launch botrista. It launches all the nodes listed above except camera_localizer, as well as running the two launch files below. Once launched, the robot is ready to execture the make_coffee action once it detects a cup.
-- open_franka.launch.xml: Launches moveit and RViz for the Franka arm.
-- realsense.launch.py: Launches both the d435i and the d405, the april tag node, and the camera_localizer node.
+- `botrista.launch.py`: the main launchfile to launch botrista. It launches all the nodes listed above except camera_localizer, as well as running the two launch files below. Once launched, the robot is ready to execture the make_coffee action once it detects a cup.
+- `open_franka.launch.xml`: Launches moveit and RViz for the Franka arm.
+- `realsense.launch.py`: Launches both the d435i and the d405, the april tag node, and the camera_localizer node.
 
 ## 'make_coffee' Routine High Level Overview:
 This system is essentially a series of service and action calls which cause the robot to brew coffee when called in order.
